@@ -1,3 +1,1 @@
-# {{project}}
-
-{{description}}
+# World Generator
