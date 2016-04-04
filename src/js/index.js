@@ -5,9 +5,9 @@ function generateNoise(width, height, freq) {
     let simplex = new SimplexNoise(Math.random);
 
     for (let y = 0; y < height; y++) {
-        noise[y] = [];
         for (let x = 0; x < width; x++) {
-            noise[y][x] = simplex.noise2D(x / freq * 2, y / freq * 2) * 0.5 + 0.5; // 0.5 > convert to 0-1 range
+            // TODO: Switch to 255 range
+            noise[width * y + x] = simplex.noise2D(x / freq * 2, y / freq * 2) * 0.5 + 0.5; // 0.5 > convert to 0-1 range
         }
     }
 
@@ -20,13 +20,14 @@ function renderMapToCtx(width, height, noise, ctx) {
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            let i = (width * y + x) * 4;
-            let c = noise[y][x] * 255;
+            let i = width * y + x;
+            let d = i * 4;
+            let a = noise[i] * 255;
 
-            data[i] = c;
-            data[i + 1] = c;
-            data[i + 2] = c;
-            data[i + 3] = 255;
+            data[d] = a;
+            data[d + 1] = a;
+            data[d + 2] = a;
+            data[d + 3] = 255;
         }
     }
 
@@ -37,18 +38,19 @@ function combineMapsWeighted(width, height, maps) {
     let map = [];
 
     for (let y = 0; y < height; y++) {
-        map[y] = [];
         for (let x = 0; x < width; x++) {
-            map[y][x] = maps.reduce((val, map) => val + (map.map[y][x] * map.weight) , 0);
+            let i = width * y + x;
+            map[i] = maps.reduce((val, map) => val + (map.map[i] * map.weight) , 0);
         }
     }
 
     var largestVal = maps.reduce((val, map) => val + map.weight, 0);
 
-    // TODO: Normalise the values
+    // Normalise the values
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            map[y][x] = map[y][x] / largestVal;
+            let i = width * y + x;
+            map[i] = map[i] / largestVal;
         }
     }
 
