@@ -1,3 +1,5 @@
+var SimplexNoise = require("simplex-noise");
+
 function generateNoise(width, height, freq) {
   var noise = [];
   var simplex = new SimplexNoise(Math.random);
