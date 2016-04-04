@@ -6,8 +6,9 @@ function generateNoise(width, height, freq) {
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
-            // TODO: Switch to 255 range
-            noise[width * y + x] = simplex.noise2D(x / freq * 2, y / freq * 2) * 0.5 + 0.5; // 0.5 > convert to 0-1 range
+            let i = width * y + x;
+            let n = simplex.noise2D(x / freq * 2, y / freq * 2);
+            noise[i] = (n * 0.5 + 0.5); // 0.5 > convert to 0-1 range
         }
     }
 
@@ -56,7 +57,6 @@ function combineMapsWeighted(width, height, maps) {
 
     return map;
 }
-// array[width * row + col] = value;
 
 
 const WIDTH = 320;
@@ -70,6 +70,7 @@ canvas.height = HEIGHT;
 var ctx = canvas.getContext("2d");
 
 // console.profile("Processing noise maps");
+var t0 = performance.now();
 var map1 = generateNoise(WIDTH, HEIGHT, 512);
 var map2 = generateNoise(WIDTH, HEIGHT, 256);
 var map3 = generateNoise(WIDTH, HEIGHT, 128);
@@ -90,3 +91,5 @@ var mapCombined = combineMapsWeighted(WIDTH, HEIGHT, [
 
 renderMapToCtx(WIDTH, HEIGHT, mapCombined, ctx);
 // console.profileEnd();
+var t1 = performance.now();
+console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");

@@ -5,6 +5,12 @@ import webpack from "webpack-stream";
 import config from "./config";
 import webpackConfig from"../webpack.config";
 
+gulp.task("copy-simplex", () => {
+    return gulp
+        .src(path.join("node_modules", "simplex-noise", "simplex-noise.min.js"))
+        .pipe(gulp.dest(path.join(config.dir.dist, config.dir.js)));
+});
+
 
 // Compile JS
 gulp.task("js",  () => {

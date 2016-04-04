@@ -26,6 +26,9 @@ const common = {
         filename: "[name].js",
         publicPath: "/js/"
     },
+    externals: {
+        "simplex-noise": "SimplexNoise"
+    },
     module: {
         preLoaders: [],
 

@@ -1,7 +1,7 @@
 import gulp from "gulp";
 
-gulp.task("build", ["html", "js"]);
+gulp.task("build", ["html", "js", "copy-simplex"]);
 
-gulp.task("dev", ["html", "server"]);
+gulp.task("dev", ["html", "copy-simplex", "server"]);
 
 gulp.task("default", ["build"]);
