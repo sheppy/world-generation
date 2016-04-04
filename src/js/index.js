@@ -1,72 +1,64 @@
-var SimplexNoise = require("simplex-noise");
+import SimplexNoise from "simplex-noise";
 
 function generateNoise(width, height, freq) {
-  var noise = [];
-  var simplex = new SimplexNoise(Math.random);
+    let noise = [];
+    let simplex = new SimplexNoise(Math.random);
 
-  for (var y = 0; y < height; y++) {
-    noise[y] = [];
-    for (var x = 0; x < width; x++) {
-      noise[y][x] = simplex.noise2D(x / freq * 2, y / freq * 2) * 0.5 + 0.5; // 0.5 > convert to 0-1 range
+    for (let y = 0; y < height; y++) {
+        noise[y] = [];
+        for (let x = 0; x < width; x++) {
+            noise[y][x] = simplex.noise2D(x / freq * 2, y / freq * 2) * 0.5 + 0.5; // 0.5 > convert to 0-1 range
+        }
     }
-  }
 
-  return noise;
+    return noise;
 }
 
 function renderMapToCtx(width, height, noise, ctx) {
-  var imgData = ctx.getImageData(0, 0, width, height);
-  var data = imgData.data;
+    let imgData = ctx.getImageData(0, 0, width, height);
+    let data = imgData.data;
 
-  for (var y = 0; y < height; y++) {
-    for (var x = 0; x < width; x++) {
-      var i = (width * y + x) * 4;
-      var c = noise[y][x] * 255;
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            let i = (width * y + x) * 4;
+            let c = noise[y][x] * 255;
 
-      data[i] = c;
-      data[i + 1] = c;
-      data[i + 2] = c;
-      data[i + 3] = 255;
+            data[i] = c;
+            data[i + 1] = c;
+            data[i + 2] = c;
+            data[i + 3] = 255;
+        }
     }
-  }
 
-  ctx.putImageData(imgData, 0, 0);
+    ctx.putImageData(imgData, 0, 0);
 }
 
 function combineMapsWeighted(width, height, maps) {
-  var map = [];
+    let map = [];
 
-  for (var y = 0; y < height; y++) {
-    map[y] = [];
-    for (var x = 0; x < width; x++) {
-      map[y][x] = maps.reduce(function(val, map) {
-        return val + (map.map[y][x] * map.weight);
-      }, 0);
+    for (let y = 0; y < height; y++) {
+        map[y] = [];
+        for (let x = 0; x < width; x++) {
+            map[y][x] = maps.reduce((val, map) => val + (map.map[y][x] * map.weight) , 0);
+        }
     }
-  }
 
-  var largestVal = maps.reduce(function(val, map) {
-    return val + map.weight;
-  }, 0);
+    var largestVal = maps.reduce((val, map) => val + map.weight, 0);
 
-  // TODO: Normalise the values
-  for (var y = 0; y < height; y++) {
-    for (var x = 0; x < width; x++) {
-      map[y][x] = map[y][x] / largestVal;
+    // TODO: Normalise the values
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            map[y][x] = map[y][x] / largestVal;
+        }
     }
-  }
 
-  // for (var i = 0; i < maps.length; i++) {
-  //   largestWeight = Math.max(weight, maps[i].weight);
-  // }
-
-  return map;
+    return map;
 }
 // array[width * row + col] = value;
 
 
-var WIDTH = 320;
-var HEIGHT = 240;
+const WIDTH = 320;
+const HEIGHT = 240;
 
 
 var canvas = document.createElement("canvas");
@@ -85,13 +77,13 @@ var map6 = generateNoise(WIDTH, HEIGHT, 16);
 var map7 = generateNoise(WIDTH, HEIGHT, 8);
 
 var mapCombined = combineMapsWeighted(WIDTH, HEIGHT, [
-  { map: map1, weight: 64 },
-  { map: map2, weight: 32 },
-  { map: map3, weight: 16 },
-  { map: map4, weight: 8 },
-  { map: map5, weight: 4 },
-  { map: map6, weight: 2 },
-  { map: map7, weight: 1 }
+    { map: map1, weight: 64 },
+    { map: map2, weight: 32 },
+    { map: map3, weight: 16 },
+    { map: map4, weight: 8 },
+    { map: map5, weight: 4 },
+    { map: map6, weight: 2 },
+    { map: map7, weight: 1 }
 ]);
 
 renderMapToCtx(WIDTH, HEIGHT, mapCombined, ctx);
