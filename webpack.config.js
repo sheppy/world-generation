@@ -27,7 +27,8 @@ const common = {
         publicPath: "/js/"
     },
     externals: {
-        "simplex-noise": "SimplexNoise"
+        "simplex-noise": "SimplexNoise",
+        "exdat": "dat"
     },
     module: {
         preLoaders: [],

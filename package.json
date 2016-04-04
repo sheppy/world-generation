@@ -10,8 +10,10 @@
   "author": "Chris Sheppard (http://www.chrissheppard.co.uk/)",
   "license": "GPL-2.0",
   "dependencies": {
-    "simplex-noise": "^2.2.0",
-    "require-dir": "^0.3.0"
+    "alea": "0.0.9",
+    "exdat": "^0.6.2",
+    "require-dir": "^0.3.0",
+    "simplex-noise": "^2.2.0"
   },
   "devDependencies": {
     "babel-core": "^6.7.4",

@@ -1,8 +1,22 @@
+import dat from "exdat";
+import Alea from "alea";
 import SimplexNoise from "simplex-noise";
+
+
+var obj = { x: 5 };
+var gui = new dat.GUI();
+
+gui.add(obj, 'x').onChange(function() {
+    // obj.x will now have updated value
+});
+
+var seed = 123456;
+
+var random = new Alea(seed);
 
 function generateNoise(width, height, freq) {
     let noise = [];
-    let simplex = new SimplexNoise(Math.random);
+    let simplex = new SimplexNoise(random);
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
@@ -70,7 +84,7 @@ canvas.height = HEIGHT;
 var ctx = canvas.getContext("2d");
 
 // console.profile("Processing noise maps");
-var t0 = performance.now();
+// var t0 = performance.now();
 var map1 = generateNoise(WIDTH, HEIGHT, 512);
 var map2 = generateNoise(WIDTH, HEIGHT, 256);
 var map3 = generateNoise(WIDTH, HEIGHT, 128);
@@ -89,7 +103,23 @@ var mapCombined = combineMapsWeighted(WIDTH, HEIGHT, [
     { map: map7, weight: 1 }
 ]);
 
+
+var elevations = {
+    min: 0,
+    sea: 0.25,
+    hill : 0.65,
+    mountain: 1
+};
+
+
+
+
+
+
+
+
+
 renderMapToCtx(WIDTH, HEIGHT, mapCombined, ctx);
 // console.profileEnd();
-var t1 = performance.now();
-console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
+// var t1 = performance.now();
+// console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");

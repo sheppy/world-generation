@@ -11,6 +11,12 @@ gulp.task("copy-simplex", () => {
         .pipe(gulp.dest(path.join(config.dir.dist, config.dir.js)));
 });
 
+gulp.task("copy-dat.gui", () => {
+    return gulp
+        .src(path.join("node_modules", "exdat", "build", "dat.gui.min.js"))
+        .pipe(gulp.dest(path.join(config.dir.dist, config.dir.js)));
+});
+
 
 // Compile JS
 gulp.task("js",  () => {
