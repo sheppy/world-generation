@@ -29,24 +29,50 @@ function generateNoise(width, height, freq) {
     return noise;
 }
 
-function renderMapToCtx(width, height, noise, ctx) {
-    let imgData = ctx.getImageData(0, 0, width, height);
+function renderMapToCtx(map, ctx) {
+    let imgData = ctx.getImageData(0, 0, map.width, map.height);
     let data = imgData.data;
 
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            let i = width * y + x;
-            let d = i * 4;
-            let a = noise[i] * 255;
-
-            data[d] = a;
-            data[d + 1] = a;
-            data[d + 2] = a;
-            data[d + 3] = 255;
+    for (let y = 0; y < map.height; y++) {
+        for (let x = 0; x < map.width; x++) {
+            let i = map.width * y + x;
+            setPixelColor(data, i * 4, map.combined[i], map.elevations);
         }
     }
 
     ctx.putImageData(imgData, 0, 0);
+}
+
+function setPixelColor(data, d, val, elevationData) {
+    data[d + 3] = 255;
+
+    if (!elevationData) {
+        var grey = val * 255;
+        data[d] = grey;
+        data[d + 1] = grey;
+        data[d + 2] = grey;
+        return;
+    }
+
+    var color = elevationData.min.color;
+    //
+    // if (val < elevationData.sea.value) {
+    //
+    // }
+    //
+    if (val >= elevationData.sea.value) {
+        color = elevationData.sea.color;
+    }
+    if (val >= elevationData.hill.value) {
+        color = elevationData.hill.color;
+    }
+    if (val >= elevationData.mountain.value) {
+        color = elevationData.mountain.color;
+    }
+
+    data[d] = color[0];
+    data[d + 1] = color[1];
+    data[d + 2] = color[2];
 }
 
 function combineMapsWeighted(width, height, maps) {
@@ -83,43 +109,58 @@ canvas.width = WIDTH;
 canvas.height = HEIGHT;
 var ctx = canvas.getContext("2d");
 
+var map = {};
+map.width = WIDTH;
+map.height = HEIGHT;
+
 // console.profile("Processing noise maps");
 // var t0 = performance.now();
-var map1 = generateNoise(WIDTH, HEIGHT, 512);
-var map2 = generateNoise(WIDTH, HEIGHT, 256);
-var map3 = generateNoise(WIDTH, HEIGHT, 128);
-var map4 = generateNoise(WIDTH, HEIGHT, 64);
-var map5 = generateNoise(WIDTH, HEIGHT, 32);
-var map6 = generateNoise(WIDTH, HEIGHT, 16);
-var map7 = generateNoise(WIDTH, HEIGHT, 8);
+map.noise1 = generateNoise(WIDTH, HEIGHT, 512);
+map.noise2 = generateNoise(WIDTH, HEIGHT, 256);
+map.noise3 = generateNoise(WIDTH, HEIGHT, 128);
+map.noise4 = generateNoise(WIDTH, HEIGHT, 64);
+map.noise5 = generateNoise(WIDTH, HEIGHT, 32);
+map.noise6 = generateNoise(WIDTH, HEIGHT, 16);
+map.noise7 = generateNoise(WIDTH, HEIGHT, 8);
 
-var mapCombined = combineMapsWeighted(WIDTH, HEIGHT, [
-    { map: map1, weight: 64 },
-    { map: map2, weight: 32 },
-    { map: map3, weight: 16 },
-    { map: map4, weight: 8 },
-    { map: map5, weight: 4 },
-    { map: map6, weight: 2 },
-    { map: map7, weight: 1 }
+map.combined = combineMapsWeighted(WIDTH, HEIGHT, [
+    { map: map.noise1, weight: 64 },
+    { map: map.noise2, weight: 32 },
+    { map: map.noise3, weight: 16 },
+    { map: map.noise4, weight: 8 },
+    { map: map.noise5, weight: 4 },
+    { map: map.noise6, weight: 2 },
+    { map: map.noise7, weight: 1 }
 ]);
 
 
-var elevations = {
-    min: 0,
-    sea: 0.25,
-    hill : 0.65,
-    mountain: 1
+map.elevations = {
+    min: {
+        value: 0,
+        color: [2, 69, 92]
+    },
+    sea: {
+        value: 0.25,
+        color: [128, 237, 235]
+    },
+    hill : {
+        value: 0.65,
+        color: [65, 69, 28]
+    },
+    mountain: {
+        value: 1,
+        color: [226, 227, 218]
+    }
 };
 
+map.clone = map.combined.slice(0).sort();
+map.elevations.min.value = map.clone[0];
+map.elevations.sea.value = map.clone[Math.ceil(map.elevations.sea.value * map.clone.length)];
+map.elevations.hill.value = map.clone[Math.ceil(map.elevations.hill.value * map.clone.length)];
+map.elevations.mountain.value = map.clone[map.clone.length - 1];
 
 
-
-
-
-
-
-
-renderMapToCtx(WIDTH, HEIGHT, mapCombined, ctx);
+renderMapToCtx(map, ctx);
 // console.profileEnd();
 // var t1 = performance.now();
 // console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
