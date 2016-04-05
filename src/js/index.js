@@ -13,6 +13,7 @@ var ctx = canvas.getContext("2d");
 
 let settings = {
     seed: 123546,
+    noiseMapCount: 7,       // Zoom?
     width: WIDTH,
     height: HEIGHT,
     gradientRender: true,
@@ -62,6 +63,7 @@ var gui = new dat.GUI();
 
 gui.add(settings, "seed").onFinishChange(update);
 gui.add(settings, "gradientRender").onFinishChange(update);
+gui.add(settings, "noiseMapCount").onFinishChange(update);
 
 var landFolder = gui.addFolder("Land");
 landFolder.add(settings.elevations.find(ele => ele.name === "land"), "value", 0, 1).onFinishChange(update);

@@ -12,13 +12,17 @@ class Map {
         this.height = options.height || 240;
         this.elevations = JSON.parse(JSON.stringify(options.elevations));
         this.gradientRender = options.gradientRender;
+        this.noiseMapCount = options.noiseMapCount || 7;
 
-        let noiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, options.noiseMapCount || 7);
-
-        this.noiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, noiseMaps);
+        this.noiseMap = this.generateNoiseMap();
         this.sortedNoiseMap = this.noiseMap.slice(0).sort();
 
         this.generateElevations();
+    }
+
+    generateNoiseMap() {
+        let noiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, this.noiseMapCount);
+        return Noise.combineNoiseMapsWeighted(this.width, this.height, noiseMaps);
     }
 
     generateElevations() {
@@ -69,14 +73,13 @@ class Map {
             let elevation = this.elevations[i];
 
             if (val >= elevation.value) {
-
-                if (!this.gradientRender) {
+                if (this.gradientRender) {
+                    let next = this.elevations[i + 1] || elevation;
+                    color = this.elevationGradient(val, elevation, next);
+                } else {
                     color = elevation.color;
-                    break;
                 }
 
-                let next = this.elevations[i + 1] || elevation;
-                color = this.gradient(val, elevation.value, next.value, elevation.color, next.color);
                 break;
             }
         }
@@ -87,15 +90,14 @@ class Map {
     }
 
     // Mix two colors according to the given proportion
-    gradient(value, low, high, low_color, high_color) {
-        let [lr, lg, lb] = low_color;
-        let [hr, hg, hb] = high_color;
-        let _range = high - low;
-        let _x = (value - low) / _range;
+    elevationGradient(value, elevation, next) {
+        let [lr, lg, lb] = elevation.color;
+        let [hr, hg, hb] = next.color;
+        let ratio = (value - elevation.value) / (next.value - elevation.value);
 
-        let r = parseInt(lr + hr * _x, 10);
-        let g = parseInt(lg + hg * _x, 10);
-        let b = parseInt(lb + hb * _x, 10);
+        let r = parseInt(lr + (hr * ratio), 10);
+        let g = parseInt(lg + (hg * ratio), 10);
+        let b = parseInt(lb + (hb * ratio), 10);
 
         return [r, g, b];
     }
