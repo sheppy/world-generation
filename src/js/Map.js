@@ -1,7 +1,7 @@
 "use strict";
 
 var Alea = require("alea");
-var SimplexNoise = require("simplex-noise");
+var Noise = require("./Noise");
 
 
 class Map {
@@ -13,67 +13,12 @@ class Map {
         this.elevations = JSON.parse(JSON.stringify(options.elevations));
         this.gradientRender = options.gradientRender;
 
-        this.noiseMaps = this.generateNoiseMaps(options.noiseMapCount || 7);
-        this.noiseMap = this.combineNoiseMapsWeighted();
+        let noiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, options.noiseMapCount || 7);
+
+        this.noiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, noiseMaps);
         this.sortedNoiseMap = this.noiseMap.slice(0).sort();
 
         this.generateElevations();
-    }
-
-    generateNoiseMaps(noiseMapCount, minPow = 2) {
-        let noiseMaps = [];
-
-        for (let n = noiseMapCount; n > 0; --n) {
-            let frequency = Math.pow(2, n + minPow);
-            let noise = this.generateNoiseMap(frequency);
-            noiseMaps.push(noise);
-        }
-
-        return noiseMaps;
-    }
-
-    generateNoiseMap(frequency) {
-        let noise = [];
-        let simplex = new SimplexNoise(this.random);
-
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                let i = this.width * y + x;
-                let n = simplex.noise2D(x / frequency * 2, y / frequency * 2);
-                noise[i] = (n * 0.5 + 0.5); // 0.5 > convert to 0-1 range
-            }
-        }
-
-        return noise;
-    }
-
-    combineNoiseMapsWeighted() {
-        let combinedMap = [];
-
-        // Create weights
-        let weights = [];
-        for (let n = this.noiseMaps.length - 1; n >= 0; --n) {
-            weights.push(Math.pow(2, n));
-        }
-
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                let i = this.width * y + x;
-                combinedMap[i] = this.noiseMaps.reduce((val, map, n) => val + (map[i] * weights[n]), 0);
-            }
-        }
-
-        let largestVal = weights.reduce((val, weight) => val + weight, 0);
-
-        // Normalise the values
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                let i = this.width * y + x;
-                combinedMap[i] = combinedMap[i] / largestVal;
-            }
-        }
-
-        return combinedMap;
     }
 
     generateElevations() {
