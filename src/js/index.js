@@ -2,8 +2,8 @@ import dat from "exdat";
 import Map from "./Map"
 
 
-const WIDTH = 320;
-const HEIGHT = 240;
+const WIDTH = 145;
+const HEIGHT = 79;
 
 var canvas = document.createElement("canvas");
 document.body.appendChild(canvas);
@@ -16,6 +16,7 @@ let settings = {
     noiseMapCount: 7,       // Zoom?
     width: WIDTH,
     height: HEIGHT,
+    colorRender: false,
     gradientRender: true,
     elevations: [
         {
@@ -35,7 +36,7 @@ let settings = {
         },
         {
             name: "hill",
-            value: 0.65,
+            value: 0.8,
             color: [65, 69, 28]
         },
         {
@@ -55,6 +56,8 @@ function update() {
     m.render(ctx);
 }
 
+window.map = m;
+
 
 
 
@@ -62,8 +65,14 @@ function update() {
 var gui = new dat.GUI();
 
 gui.add(settings, "seed").onFinishChange(update);
+gui.add(settings, "colorRender").onFinishChange(update);
 gui.add(settings, "gradientRender").onFinishChange(update);
 gui.add(settings, "noiseMapCount").onFinishChange(update);
+
+
+var seaFolder = gui.addFolder("Sea");
+seaFolder.add(settings.elevations.find(ele => ele.name === "sea"), "value", 0, 1).onFinishChange(update);
+seaFolder.open();
 
 var landFolder = gui.addFolder("Land");
 landFolder.add(settings.elevations.find(ele => ele.name === "land"), "value", 0, 1).onFinishChange(update);
@@ -72,3 +81,7 @@ landFolder.open();
 var hillsFolder = gui.addFolder("Hills");
 hillsFolder.add(settings.elevations.find(ele => ele.name === "hill"), "value", 0, 1).onFinishChange(update);
 hillsFolder.open();
+
+var mountainsFolder = gui.addFolder("Mountains");
+mountainsFolder.add(settings.elevations.find(ele => ele.name === "mountain"), "value", 0, 1).onFinishChange(update);
+mountainsFolder.open();

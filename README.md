@@ -1,6 +1,9 @@
 # World Generator
 
 ## Resources
+ * http://www.nolithius.com/game-development/world-generation-breakdown
+ * http://www.nolithius.com/game-development/world-generation-teaser
  * http://www.redblobgames.com/articles/noise/introduction.html
  * https://www.smashingmagazine.com/2016/03/procedural-content-generation-introduction/
  * http://bytten.net/devlog//2013/10/07/overworld-generation-part-2/
+ * http://www.dungeonleague.com/2010/03/28/wind-direction/
