@@ -1,15 +1,13 @@
 import dat from "exdat";
 import Map from "./Map"
+import Graphics from "./Graphics"
 
 
 const WIDTH = 145;
 const HEIGHT = 79;
 
-var canvas = document.createElement("canvas");
-document.body.appendChild(canvas);
-canvas.width = WIDTH;
-canvas.height = HEIGHT;
-var ctx = canvas.getContext("2d");
+var ctx = Graphics.createCanvas(WIDTH, HEIGHT);
+
 
 let settings = {
     seed: 123546,
@@ -22,38 +20,38 @@ let settings = {
         {
             name: "min",
             value: 0,
-            color: [2, 69, 92]
+            color: [48, 96, 130]
         },
         {
             name: "sea",
             value: 0.25,
-            color: [128, 237, 235]
+            color: [99, 155, 255]
         },
         {
             name: "land",
             value: 0.45,
-            color: [112, 158, 76]
+            color: [106, 190, 48]
         },
         {
             name: "hill",
             value: 0.8,
-            color: [65, 69, 28]
+            color: [75, 105, 47]
         },
         {
             name: "mountain",
             value: 1,
-            color: [226, 227, 218]
+            color: [255, 255, 255]
         }
     ]
 };
 
 let m = new Map();
 m.generate(settings);
-m.render(ctx);
+Graphics.renderMapData(ctx, m);
 
 function update() {
     m.generate(settings);
-    m.render(ctx);
+    Graphics.renderMapData(ctx, m);
 }
 
 window.map = m;

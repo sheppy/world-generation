@@ -2,14 +2,15 @@
 
 var Alea = require("alea");
 var Noise = require("./Noise");
+var Colour = require("./Colour");
 
 
 class Map {
     generate(options = {}) {
         this.seed = options.seed || Date.now();
         this.random = new Alea(this.seed);
-        this.width = options.width || 320;
-        this.height = options.height || 240;
+        this.width = options.width;
+        this.height = options.height;
         this.colorRender = options.colorRender;
         this.gradientRender = options.gradientRender;
 
@@ -34,20 +35,21 @@ class Map {
         return data;
     }
 
-    generateHeightMap(noiseMapCount) {
-        noiseMapCount = noiseMapCount || 7;
-
-        // Generate rolling particle mask
+    generateRollingMask() {
         let iterations = (Math.ceil(this.width * this.height) / 1000) * 1000;
         let life = (Math.floor(this.width * this.height) / 500) * 10;
-        let baseMap = Noise.generateRollingMap(this.random, this.width, this.height, iterations, life);
-        // return baseMap;
+        return Noise.generateRollingMap(this.random, this.width, this.height, iterations, life);
+    }
 
-        let noiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
-        let heightMap = Noise.combineNoiseMapsWeighted(this.width, this.height, noiseMaps);
+    generateHeightMap(noiseMapCount) {
+        // Generate rolling particle mask
+        let heightRollingMask = this.generateRollingMask();
+        let heightNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
+        let heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, heightNoiseMaps);
 
-        // TODO: Multiple base map against heightMap
-        return heightMap.map((val, n) => val * baseMap[n]);
+        // Multiple rolling mask against heightNOiseMap
+        let heightMap = heightNoiseMap.map((val, n) => val * heightRollingMask[n]);
+
         return heightMap;
     }
 
@@ -92,55 +94,13 @@ class Map {
                 color = [grey, grey, grey];
             } else if (this.gradientRender) {
                 let next = this.elevations[i + 1] || elevation;
-                color = this.elevationGradient(height, elevation, next);
+                color = Colour.colorGradient(height, elevation, next);
             } else {
                 color = elevation.color;
             }
         }
 
         return color;
-    }
-
-    render(ctx) {
-        // TODO: Remove clear and use createImageData?
-        ctx.clearRect(0, 0, this.width, this.height);
-        let imgData = ctx.getImageData(0, 0, this.width, this.height);
-        let data = imgData.data;
-
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                let i = this.width * y + x;
-                this.setPixelColor(data, i * 4, this.data[i].color);
-            }
-        }
-
-        ctx.putImageData(imgData, 0, 0);
-    }
-
-    setPixelColor(data, d, color) {
-        data[d + 3] = 255;
-        data[d] = color[0];
-        data[d + 1] = color[1];
-        data[d + 2] = color[2];
-    }
-
-    // Mix two colors according to the given proportion
-    elevationGradient(value, from, to) {
-        if (from === to) {
-            return from.color;
-        }
-
-        let [lr, lg, lb] = from.color;
-        let [hr, hg, hb] = to.color;
-        let ratio = (value - from.value) / (to.value - from.value);
-
-        let _ix = 1.0 - ratio;
-
-        let r = parseInt(lr * _ix + hr * ratio, 10);
-        let g = parseInt(lg * _ix + hg * ratio, 10);
-        let b = parseInt(lb * _ix + hb * ratio, 10);
-
-        return [r, g, b];
     }
 }
 
