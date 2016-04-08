@@ -61,7 +61,7 @@ class Noise {
                 }
             }
         }
-        
+
         // To absolutely ensure that the islands will not reach the edges, I’ve also multiplied the outermost tiles by 0.75, and the second outermost tiles by 0.88
 
         // Normalize the map
@@ -98,6 +98,7 @@ class Noise {
 
     static combineNoiseMapsWeighted(width, height, noiseMaps) {
         let combinedMap = [];
+        let mapLength = width * height;
 
         // Create weights
         let weights = [];
@@ -105,21 +106,15 @@ class Noise {
             weights.push(Math.pow(2, n));
         }
 
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let i = width * y + x;
-                combinedMap[i] = noiseMaps.reduce((val, map, n) => val + (map[i] * weights[n]), 0);
-            }
+        for (let i = 0; i < mapLength; i++) {
+            combinedMap[i] = noiseMaps.reduce((val, map, n) => val + (map[i] * weights[n]), 0);
         }
 
         let largestVal = weights.reduce((val, weight) => val + weight, 0);
 
         // Normalise the values
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                let i = width * y + x;
-                combinedMap[i] = combinedMap[i] / largestVal;
-            }
+        for (let i = 0; i < mapLength; i++) {
+            combinedMap[i] = combinedMap[i] / largestVal;
         }
 
         return combinedMap;

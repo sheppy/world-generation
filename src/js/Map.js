@@ -22,14 +22,11 @@ class Map {
     generateMapData(heightMap) {
         let data = [];
 
-        for (let y = 0; y < this.height; y++) {
-            for (let x = 0; x < this.width; x++) {
-                let i = this.width * y + x;
-                data[i] = {};
-                data[i].height = heightMap[i];
-                data[i].elevation = this.getElevationFromHeight(data[i].height);
-                data[i].color = this.getColorFromElevation(data[i].height, data[i].elevation);
-            }
+        for (let i = 0, j = this.width * this.height; i < j; i++) {
+            data[i] = {};
+            data[i].height = heightMap[i];
+            data[i].elevation = this.getElevationFromHeight(data[i].height);
+            data[i].color = this.getColorFromElevation(data[i].height, data[i].elevation);
         }
 
         return data;

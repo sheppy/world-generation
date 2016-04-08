@@ -13,16 +13,13 @@ class Graphics {
         let imgData = ctx.createImageData(map.width, map.height);
         let data = imgData.data;
 
-        for (let y = 0; y < map.height; y++) {
-            for (let x = 0; x < map.width; x++) {
-                let i = map.width * y + x;
-                let d = i * 4;
+        for (let i = 0; i < map.data.length; i++) {
+            let d = i * 4;
 
-                data[d] = map.data[i].color[0];
-                data[d + 1] = map.data[i].color[1];
-                data[d + 2] = map.data[i].color[2];
-                data[d + 3] = 255;
-            }
+            data[d] = map.data[i].color[0];
+            data[d + 1] = map.data[i].color[1];
+            data[d + 2] = map.data[i].color[2];
+            data[d + 3] = 255;
         }
 
         ctx.putImageData(imgData, 0, 0);
