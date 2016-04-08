@@ -11,12 +11,10 @@ class Map {
         this.random = new Alea(this.seed);
         this.width = options.width;
         this.height = options.height;
-        this.colorRender = options.colorRender;
-        this.gradientRender = options.gradientRender;
 
-        let heightMap = this.generateHeightMap(options.noiseMapCount);
-        this.elevations = this.parseElevations(options.elevations, heightMap);
-        this.data = this.generateMapData(heightMap);
+        this.generateHeightMap(options.noiseMapCount);
+        this.elevations = this.parseElevations(options.elevations, this.heightMap);
+        this.data = this.generateMapData(this.heightMap);
     }
 
     generateMapData(heightMap) {
@@ -26,7 +24,6 @@ class Map {
             data[i] = {};
             data[i].height = heightMap[i];
             data[i].elevation = this.getElevationFromHeight(data[i].height);
-            data[i].color = this.getColorFromElevation(data[i].height, data[i].elevation);
         }
 
         return data;
@@ -40,14 +37,12 @@ class Map {
 
     generateHeightMap(noiseMapCount) {
         // Generate rolling particle mask
-        let heightRollingMask = this.generateRollingMask();
-        let heightNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
-        let heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, heightNoiseMaps);
+        this.heightRollingMask = this.generateRollingMask();
+        this.heightNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
+        this.heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.heightNoiseMaps);
 
-        // Multiple rolling mask against heightNOiseMap
-        let heightMap = heightNoiseMap.map((val, n) => val * heightRollingMask[n]);
-
-        return heightMap;
+        // Multiple rolling mask against heightNoiseMap
+        this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
     }
 
     parseElevations(elevations, heightMap) {
@@ -79,25 +74,6 @@ class Map {
                 return i;
             }
         }
-    }
-
-    getColorFromElevation(height, i) {
-        let elevation = this.elevations[i];
-        let color = elevation.color;
-
-        if (height >= elevation.value) {
-            if (!this.colorRender) {
-                let grey = height * 255;
-                color = [grey, grey, grey];
-            } else if (this.gradientRender) {
-                let next = this.elevations[i + 1] || elevation;
-                color = Colour.colorGradient(height, elevation, next);
-            } else {
-                color = elevation.color;
-            }
-        }
-
-        return color;
     }
 }
 

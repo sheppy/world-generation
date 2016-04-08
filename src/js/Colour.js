@@ -14,7 +14,7 @@ class Colour {
      * @returns {Array}
      */
     static colorGradient(value, from, to) {
-        if (from === to) {
+        if (from.value === to.value) {
             return from.color;
         }
 

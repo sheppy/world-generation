@@ -14,8 +14,6 @@ let settings = {
     noiseMapCount: 7,       // Zoom?
     width: WIDTH,
     height: HEIGHT,
-    colorRender: false,
-    gradientRender: true,
     elevations: [
         {
             name: "min",
@@ -42,16 +40,39 @@ let settings = {
             value: 1,
             color: [255, 255, 255]
         }
-    ]
+    ],
+
+    renderMode: "data"
 };
 
+let renderModes = [
+    "data",
+    "dataFlat",
+    "heightMap",
+    "heightRollingMask",
+    "heightNoiseMap"
+];
+
 let m = new Map();
-m.generate(settings);
-Graphics.renderMapData(ctx, m);
+update();
 
 function update() {
     m.generate(settings);
-    Graphics.renderMapData(ctx, m);
+    render();
+}
+
+function render() {
+    switch (settings.renderMode) {
+        case "heightNoiseMap":      Graphics.renderAlphaMap(ctx, m.heightNoiseMap, WIDTH, HEIGHT); break;
+        case "heightRollingMask":   Graphics.renderAlphaMap(ctx, m.heightRollingMask, WIDTH, HEIGHT); break;
+        case "heightMap":           Graphics.renderAlphaMap(ctx, m.heightMap, WIDTH, HEIGHT); break;
+
+        case "dataFlat":            Graphics.renderHeightMapData(ctx, m, true); break;
+
+        case "data":
+        default:
+            Graphics.renderHeightMapData(ctx, m);
+    }
 }
 
 window.map = m;
@@ -63,9 +84,8 @@ window.map = m;
 var gui = new dat.GUI();
 
 gui.add(settings, "seed").onFinishChange(update);
-gui.add(settings, "colorRender").onFinishChange(update);
-gui.add(settings, "gradientRender").onFinishChange(update);
 gui.add(settings, "noiseMapCount").onFinishChange(update);
+gui.add(settings, "renderMode", renderModes).onFinishChange(render);
 
 
 var seaFolder = gui.addFolder("Sea");
