@@ -42,7 +42,8 @@ let settings = {
         }
     ],
 
-    renderMode: "data"
+    renderMode: "continentNoiseMap"
+    // renderMode: "data"
 };
 
 let renderModes = [
@@ -50,7 +51,9 @@ let renderModes = [
     "dataFlat",
     "heightMap",
     "heightRollingMask",
-    "heightNoiseMap"
+    "heightNoiseMap",
+    "windNoiseMap",
+    "continentNoiseMap"
 ];
 
 let m = new Map();
@@ -66,6 +69,8 @@ function render() {
         case "heightNoiseMap":      Graphics.renderAlphaMap(ctx, m.heightNoiseMap, WIDTH, HEIGHT); break;
         case "heightRollingMask":   Graphics.renderAlphaMap(ctx, m.heightRollingMask, WIDTH, HEIGHT); break;
         case "heightMap":           Graphics.renderAlphaMap(ctx, m.heightMap, WIDTH, HEIGHT); break;
+        case "windNoiseMap":        Graphics.renderAlphaMap(ctx, m.windNoiseMap, WIDTH, HEIGHT); break;
+        case "continentNoiseMap":        Graphics.renderAlphaMap(ctx, m.continentNoiseMap, WIDTH, HEIGHT); break;
 
         case "dataFlat":            Graphics.renderHeightMapData(ctx, m, true); break;
 

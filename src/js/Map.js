@@ -14,6 +14,9 @@ class Map {
 
         this.generateHeightMap(options.noiseMapCount);
         this.elevations = this.parseElevations(options.elevations, this.heightMap);
+        // TODO: Generate continents with flood fill
+        this.generateWindMap();
+
         this.data = this.generateMapData(this.heightMap);
     }
 
@@ -43,6 +46,37 @@ class Map {
 
         // Multiple rolling mask against heightNoiseMap
         this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
+    }
+
+    generateWindMap() {
+        // 1. Start with a base noise map. (FBM octaves = 5.0 and size = 4.0)
+        this.windNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, 4);
+        this.windNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.windNoiseMaps);
+
+        // 2. Define bands where with varying wind values. (Strong-Weak-Strong for this example)
+        let bands = this.createBandMap(2);
+
+        // 3. For each cell the value from the band is added to the noise map multiplied by the base noise weight
+        let mapLength = this.width * this.height;
+
+        for (let i = 0; i < mapLength; i++) {
+            this.windNoiseMap[i] += bands[i] * 0.5;
+        }
+
+        // 4. To complete the base map the whole map is normalized between 0.0 and a base weight.
+        let largestVal = this.windNoiseMap.reduce((largest, val) => val > largest ? val : largest, 0);
+        for (let i = 0; i < mapLength; i++) {
+            this.windNoiseMap[i] = this.windNoiseMap[i] / largestVal;
+        }
+
+        // 5. A second noise map is created called the continent noise map. (FBM octaves = 5.0 and size = 8.0)
+        this.continentNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, 8);
+        this.continentNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.continentNoiseMaps);
+
+        // 6. Using the Voronoi operation create a map where every cell has a value equal to its distance to the nearest coast.
+        // 7. For each cell I create a weight based on the distance to the coast. If the point is further than the distance threshold the weight is 1.0 if over ocean and 0.0 if over land.
+        // 8. This weight is combines the the continent weight and then multiplied by the continent noise and added to the base map.
+        // 9. The final map is then normalized.
     }
 
     parseElevations(elevations, heightMap) {
@@ -75,7 +109,29 @@ class Map {
             }
         }
     }
+
+    createBandMap(numBands) {
+        let bandHeight = this.height / numBands * 0.5;
+        let bands = [];
+
+        for (let y = 0; y < this.height; y++) {
+            let bandNo = Math.floor(y / bandHeight);
+            let bY = bandNo * bandHeight;
+            let val = (y - bY) / bandHeight;
+            if (bandNo % 2) {
+                val = 1 - val;
+            }
+
+            for (let x = 0; x < this.width; x++) {
+                let i = this.width * y + x;
+                bands[i] = val;
+            }
+        }
+
+        return bands;
+    }
 }
+
 
 
 module.exports = Map;
