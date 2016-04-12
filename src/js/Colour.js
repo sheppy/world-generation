@@ -18,6 +18,14 @@ class Colour {
             return from.color;
         }
 
+        if (value < from.value) {
+            value = from.value;
+        }
+
+        if (value > to.value) {
+            value = to.value;
+        }
+
         let [lr, lg, lb] = from.color;
         let [hr, hg, hb] = to.color;
         let ratio = (value - from.value) / (to.value - from.value);
