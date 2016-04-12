@@ -16,33 +16,55 @@ let settings = {
     height: HEIGHT,
     elevations: [
         {
-            name: "min",
-            value: 0,
+            name: "deepSea",
+            seaLevel: -255,
             color: [48, 96, 130]
         },
         {
             name: "sea",
-            value: 0.25,
+            seaLevel: -40,
             color: [99, 155, 255]
         },
         {
-            name: "land",
-            value: 0.45,
+            name: "beach",
+            seaLevel: 15,
+            color: [251, 242, 54]
+        },
+        {
+            name: "plain",
+            seaLevel: 35,
             color: [106, 190, 48]
         },
         {
-            name: "hill",
-            value: 0.8,
+            name: "forest",
+            seaLevel: 205,
             color: [75, 105, 47]
         },
         {
+            name: "hill",
+            // value: 0.8,
+            // level: 205,
+            skyLevel: -10,
+            color: [138, 111, 48]
+            // color: [0, 255, 255]
+        },
+        {
             name: "mountain",
-            value: 1,
+            // value: 1,
+            // level: 230,
+            skyLevel: -1,
             color: [255, 255, 255]
         }
     ],
 
-    renderMode: "windNoiseMap"
+    // Wind
+    windNoiseSize: 3,
+    windContinentNoiseSize: 8,
+    windBandWeight: 0.8,
+    windContinentWeight: 0.3,
+
+    // Rendering debugging
+    renderMode: "windMap"
     // renderMode: "data"
 };
 
@@ -53,6 +75,7 @@ let renderModes = [
     "heightRollingMask",
     "heightNoiseMap",
     "windNoiseMap",
+    "windMap",
     "continentNoiseMap"
 ];
 
@@ -70,7 +93,8 @@ function render() {
         case "heightRollingMask":   Graphics.renderAlphaMap(ctx, m.heightRollingMask, WIDTH, HEIGHT); break;
         case "heightMap":           Graphics.renderAlphaMap(ctx, m.heightMap, WIDTH, HEIGHT); break;
         case "windNoiseMap":        Graphics.renderAlphaMap(ctx, m.windNoiseMap, WIDTH, HEIGHT); break;
-        case "continentNoiseMap":        Graphics.renderAlphaMap(ctx, m.continentNoiseMap, WIDTH, HEIGHT); break;
+        case "continentNoiseMap":   Graphics.renderAlphaMap(ctx, m.continentNoiseMap, WIDTH, HEIGHT); break;
+        case "windMap":             Graphics.renderAlphaMap(ctx, m.windMap, WIDTH, HEIGHT); break;
 
         case "dataFlat":            Graphics.renderHeightMapData(ctx, m, true); break;
 
@@ -91,20 +115,24 @@ var gui = new dat.GUI();
 gui.add(settings, "seed").onFinishChange(update);
 gui.add(settings, "noiseMapCount").onFinishChange(update);
 gui.add(settings, "renderMode", renderModes).onFinishChange(render);
+gui.add(settings, "windNoiseSize").onFinishChange(update);
+gui.add(settings, "windContinentNoiseSize").onFinishChange(update);
+gui.add(settings, "windBandWeight").onFinishChange(update);
+gui.add(settings, "windContinentWeight").onFinishChange(update);
 
 
-var seaFolder = gui.addFolder("Sea");
-seaFolder.add(settings.elevations.find(ele => ele.name === "sea"), "value", 0, 1).onFinishChange(update);
-seaFolder.open();
-
-var landFolder = gui.addFolder("Land");
-landFolder.add(settings.elevations.find(ele => ele.name === "land"), "value", 0, 1).onFinishChange(update);
-landFolder.open();
-
-var hillsFolder = gui.addFolder("Hills");
-hillsFolder.add(settings.elevations.find(ele => ele.name === "hill"), "value", 0, 1).onFinishChange(update);
-hillsFolder.open();
-
-var mountainsFolder = gui.addFolder("Mountains");
-mountainsFolder.add(settings.elevations.find(ele => ele.name === "mountain"), "value", 0, 1).onFinishChange(update);
-mountainsFolder.open();
+// var seaFolder = gui.addFolder("Sea");
+// seaFolder.add(settings.elevations.find(ele => ele.name === "sea"), "seaLevel", -255, 255).onFinishChange(update);
+// seaFolder.open();
+//
+// var landFolder = gui.addFolder("Land");
+// landFolder.add(settings.elevations.find(ele => ele.name === "plain"), "seaLevel", -255, 255).onFinishChange(update);
+// landFolder.open();
+//
+// var hillsFolder = gui.addFolder("Hills");
+// hillsFolder.add(settings.elevations.find(ele => ele.name === "hill"), "level", -255, 255).onFinishChange(update);
+// hillsFolder.open();
+//
+// var mountainsFolder = gui.addFolder("Mountains");
+// mountainsFolder.add(settings.elevations.find(ele => ele.name === "mountain"), "level", -255, 255).onFinishChange(update);
+// mountainsFolder.open();
