@@ -14,3 +14,10 @@
  * http://pixeljoint.com/forum/forum_posts.asp?TID=16247
 
 https://toen.itch.io/toens-medieval-strategy
+
+## Auto Tiling
+* https://gamedev.stackexchange.com/questions/46594/elegant-autotiling
+* http://blog.rpgmakerweb.com/tutorials/anatomy-of-an-autotile/
+* http://www.saltgames.com/article/awareTiles/
+* http://www.codeproject.com/Articles/106884/Implementing-Auto-tiling-Functionality-in-a-Tile-M
+* https://vxresource.wordpress.com/2010/03/17/the-real-macks-tileset/

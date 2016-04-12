@@ -42,8 +42,8 @@ class Noise {
     static generateRollingMap(random, width, height, iterations, startLife) {
         let map = new Array(width * height).fill(0);
 
-        let widthBias = Math.floor(width * 0.1);
-        let heightBias = Math.floor(height * 0.1);
+        let widthBias = Math.floor(width * 0.15);
+        let heightBias = Math.floor(height * 0.25);
 
         let left = widthBias;
         let right = width - widthBias;

@@ -12,6 +12,7 @@ class Map {
         this.width = options.width;
         this.height = options.height;
 
+        this.percentLand = options.percentLand || 0.6;
         this.windNoiseSize = options.windNoiseSize || 3;
         this.windContinentNoiseSize = options.windContinentNoiseSize || 8;
         this.windBandWeight = options.windBandWeight || 0.8;
@@ -38,8 +39,8 @@ class Map {
     }
 
     generateRollingMask() {
-        let iterations = (Math.ceil(this.width * this.height) / 1000) * 1000;
-        let life = (Math.floor(this.width * this.height) / 500) * 10;
+        let iterations = (Math.ceil(this.width * this.height) / 1000) * 2000;
+        let life = (Math.floor(this.width * this.height) / 500) * 2;
         return Noise.generateRollingMap(this.random, this.width, this.height, iterations, life);
     }
 
@@ -49,9 +50,11 @@ class Map {
         this.heightNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
         this.heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.heightNoiseMaps, 2);
 
+        // Depends if you need a centered map island
         this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
+        // this.heightMap = this.heightNoiseMap;
 
-        this.elevations = this.parseElevations(elevations, this.heightMap);
+        this.elevations = this.parseElevations(elevations, this.heightNoiseMap);
 
         // Update the main map data
         for (let i = 0, j = this.width * this.height; i < j; i++) {
@@ -113,8 +116,12 @@ class Map {
         elevations = JSON.parse(JSON.stringify(elevations));
         heightMap = heightMap.slice(0).sort();
 
-        let seaLevel = heightMap[Math.floor(0.6 * heightMap.length)];
+        this.percentLand = 0.2;
+
+        let seaLevel = heightMap[Math.floor(this.percentLand * heightMap.length)];
         let skyLevel = heightMap[heightMap.length - 1];
+
+        console.info("Sea Level:", seaLevel);
 
 
         for (let elevation of elevations) {

@@ -57,6 +57,8 @@ let settings = {
         }
     ],
 
+    percentLand: 0.6,
+
     // Wind
     windNoiseSize: 3,
     windContinentNoiseSize: 8,
@@ -64,7 +66,7 @@ let settings = {
     windContinentWeight: 0.3,
 
     // Rendering debugging
-    renderMode: "heightRollingMask"
+    renderMode: "data"
     // renderMode: "data"
 };
 
@@ -115,6 +117,7 @@ var gui = new dat.GUI();
 gui.add(settings, "seed").onFinishChange(update);
 gui.add(settings, "noiseMapCount").onFinishChange(update);
 gui.add(settings, "renderMode", renderModes).onFinishChange(render);
+gui.add(settings, "percentLand").onFinishChange(update);
 gui.add(settings, "windNoiseSize").onFinishChange(update);
 gui.add(settings, "windContinentNoiseSize").onFinishChange(update);
 gui.add(settings, "windBandWeight").onFinishChange(update);
