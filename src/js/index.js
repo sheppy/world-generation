@@ -64,7 +64,7 @@ let settings = {
     windContinentWeight: 0.3,
 
     // Rendering debugging
-    renderMode: "windMap"
+    renderMode: "heightRollingMask"
     // renderMode: "data"
 };
 

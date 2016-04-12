@@ -47,9 +47,8 @@ class Map {
         // Generate rolling particle mask
         this.heightRollingMask = this.generateRollingMask();
         this.heightNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
-        this.heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.heightNoiseMaps);
+        this.heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.heightNoiseMaps, 2);
 
-        // Multiple rolling mask against heightNoiseMap
         this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
 
         this.elevations = this.parseElevations(elevations, this.heightMap);
@@ -84,10 +83,7 @@ class Map {
         }
 
         // 4. To complete the base map the whole map is normalized between 0.0 and a base weight.
-        let largestVal = this.windNoiseMap.reduce((largest, val) => val > largest ? val : largest, 0);
-        for (let i = 0; i < mapLength; i++) {
-            this.windNoiseMap[i] = this.windNoiseMap[i] / largestVal;
-        }
+        this.normalize(this.windNoiseMap);
 
         // 5. A second noise map is created called the continent noise map. (FBM octaves = 5.0 and size = 8.0)
         this.continentNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, this.windContinentNoiseSize);
@@ -104,10 +100,7 @@ class Map {
         }
 
         // 9. The final map is then normalized.
-        largestVal = this.windMap.reduce((largest, val) => val > largest ? val : largest, 0);
-        for (let i = 0; i < mapLength; i++) {
-            this.windMap[i] = this.windMap[i] / largestVal;
-        }
+        this.normalize(this.windMap);
 
         // TODO: Update the main map data
     }
@@ -148,24 +141,19 @@ class Map {
             }
         }
 
-        console.log(elevations);
-
         return elevations;
     }
 
     getElevationFromHeight(height) {
 
         for (let i = 0, j = this.elevations.length - 1; i < j; i++) {
-            let elevation = this.elevations[i];
             let nextElevation = this.elevations[i + 1];
-
             if (height < nextElevation.value) {
                 return i;
             }
         }
 
-
-        return this.elevations.length - 1;
+        return this.elevations.length - 2;
 
 
         // for (let i = this.elevations.length - 1; i >= 0; --i) {
@@ -196,6 +184,13 @@ class Map {
         }
 
         return bands;
+    }
+
+    normalize(arr) {
+        let largestVal = arr.reduce((largest, val) => val > largest ? val : largest, 0);
+        for (let i = 0; i < arr.length; i++) {
+            arr[i] = arr[i] / largestVal;
+        }
     }
 }
 

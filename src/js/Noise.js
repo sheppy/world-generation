@@ -81,29 +81,58 @@ class Noise {
         return noiseMaps;
     }
 
+    /*
+
+     lower frequencies make wider hills and higher frequencies make narrower hills.
+     Frequency describes the horizontal size of the features;
+     amplitude describes the vertical size.
+      the valley/hill/mountain maps looked “too random” and I wanted larger areas of valleys or mountains? I was essentially asking for a lower frequency of variation.
+
+
+     Increasing the frequency means multiplying the input by some factor
+     Increasing the amplitude means multiplying the output by some factor
+    */
     static generateNoiseMap(random, width, height, frequency) {
+        // frequency = 1/64;
+        // amplitude = 1;
+
         let noise = [];
+        // let largest = -10000;
+        // let smallest = 10000;
         let simplex = new SimplexNoise(random);
 
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 let i = width * y + x;
                 let n = simplex.noise2D(x / frequency * 2, y / frequency * 2);
+                // let n = simplex.noise2D(x * frequency, y * frequency) * amplitude;
+
+
+                // if (n > largest) { largest = n; }
+                // if (n < smallest) { smallest = n; }
+
                 noise[i] = (n * 0.5 + 0.5); // 0.5 > convert to 0-1 range
+                // noise[i] = n;
             }
         }
+
+        // Normalize to 0-1 range
+        // for (let i = 0; i < noise.length; i++) {
+        //     noise[i] = (noise[i] - smallest) / (largest - smallest);
+        // }
 
         return noise;
     }
 
-    static combineNoiseMapsWeighted(width, height, noiseMaps) {
+    static combineNoiseMapsWeighted(width, height, noiseMaps, roughness) {
+        roughness = roughness || 1;
         let combinedMap = [];
         let mapLength = width * height;
 
         // Create weights
         let weights = [];
         for (let n = noiseMaps.length - 1; n >= 0; --n) {
-            weights.push(Math.pow(2, n));
+            weights.push(Math.pow(2, n / roughness));
         }
 
         for (let i = 0; i < mapLength; i++) {
@@ -118,6 +147,31 @@ class Noise {
         }
 
         return combinedMap;
+    }
+
+    static filterNoiseSmooth(noise, width, height) {
+        let filteredNoise = [];
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let i = width * y + x;
+                let i1 = (width * y) + x + 1;
+                let i2 = (width * (y + 1)) + x;
+                let i3 = (width * y) + x - 1;
+                let i4 = (width * (y - 1)) + x;
+                let count = 1;
+                let noiseVal = noise[i];
+
+                if (noise[i1] !== undefined) { count++; noiseVal += noise[i1]; }
+                if (noise[i2] !== undefined) { count++; noiseVal += noise[i2]; }
+                if (noise[i3] !== undefined) { count++; noiseVal += noise[i3]; }
+                if (noise[i4] !== undefined) { count++; noiseVal += noise[i4]; }
+
+                filteredNoise[i] = noiseVal / count;
+            }
+        }
+
+        return filteredNoise;
     }
 }
 
