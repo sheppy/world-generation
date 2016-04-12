@@ -12,24 +12,24 @@ class Map {
         this.width = options.width;
         this.height = options.height;
 
-        this.generateHeightMap(options.noiseMapCount);
-        this.elevations = this.parseElevations(options.elevations, this.heightMap);
-        // TODO: Generate continents with flood fill
-        this.generateWindMap();
+        this.initMapData();
 
-        this.data = this.generateMapData(this.heightMap);
+        this.generateHeightMap(options.noiseMapCount, options.elevations);
+        this.generateWindMap();
+        this.generateContinentMap();
     }
 
-    generateMapData(heightMap) {
-        let data = [];
+    initMapData() {
+        this.data = [];
 
-        for (let i = 0, j = this.width * this.height; i < j; i++) {
-            data[i] = {};
-            data[i].height = heightMap[i];
-            data[i].elevation = this.getElevationFromHeight(data[i].height);
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                let i = this.width * y + x;
+                this.data[i] = {};
+                this.data[i].x = x;
+                this.data[i].y = y;
+            }
         }
-
-        return data;
     }
 
     generateRollingMask() {
@@ -38,7 +38,7 @@ class Map {
         return Noise.generateRollingMap(this.random, this.width, this.height, iterations, life);
     }
 
-    generateHeightMap(noiseMapCount) {
+    generateHeightMap(noiseMapCount, elevations) {
         // Generate rolling particle mask
         this.heightRollingMask = this.generateRollingMask();
         this.heightNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
@@ -46,6 +46,21 @@ class Map {
 
         // Multiple rolling mask against heightNoiseMap
         this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
+
+        this.elevations = this.parseElevations(elevations, this.heightMap);
+
+        // Update the main map data
+        for (let i = 0, j = this.width * this.height; i < j; i++) {
+            this.data[i].height = this.heightMap[i];
+            this.data[i].elevation = this.getElevationFromHeight(this.data[i].height);
+        }
+    }
+
+    generateContinentMap() {
+        // TODO: Generate continents with flood fill
+        this.continents = [];
+
+        // TODO: Update the main map data
     }
 
     generateWindMap() {
@@ -77,6 +92,9 @@ class Map {
         // 7. For each cell I create a weight based on the distance to the coast. If the point is further than the distance threshold the weight is 1.0 if over ocean and 0.0 if over land.
         // 8. This weight is combines the the continent weight and then multiplied by the continent noise and added to the base map.
         // 9. The final map is then normalized.
+
+
+        // TODO: Update the main map data
     }
 
     parseElevations(elevations, heightMap) {

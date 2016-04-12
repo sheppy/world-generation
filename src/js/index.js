@@ -42,7 +42,7 @@ let settings = {
         }
     ],
 
-    renderMode: "continentNoiseMap"
+    renderMode: "windNoiseMap"
     // renderMode: "data"
 };
 
