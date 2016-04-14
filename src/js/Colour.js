@@ -38,6 +38,47 @@ class Colour {
 
         return [r, g, b];
     }
+
+    static getNColours(n) {
+        let colours = [];
+
+        for (let i = 0; i < 360; i += 360 / n) {
+            let c = {
+                hue: i / 360,
+                saturation: (90 + Math.random() * 10) / 100,
+                lightness: (50 + Math.random() * 10) / 100
+            };
+
+            colours.push(Colour.hslToRgb(c.hue, c.saturation, c.lightness));
+        }
+
+        return colours;
+    }
+
+    static hue2rgb(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+    }
+
+    static hslToRgb(h, s, l) {
+        var r, g, b;
+
+        if (s == 0) {
+            r = g = b = l; // achromatic
+        } else {
+            var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            var p = 2 * l - q;
+            r = Colour.hue2rgb(p, q, h + 1 / 3);
+            g = Colour.hue2rgb(p, q, h);
+            b = Colour.hue2rgb(p, q, h - 1 / 3);
+        }
+
+        return [Math.floor(r * 255), Math.floor(g * 255), Math.floor(b * 255)];
+    }
 }
 
 module.exports = Colour;

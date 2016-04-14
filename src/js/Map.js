@@ -3,6 +3,7 @@
 var Alea = require("alea");
 var Noise = require("./Noise");
 var Colour = require("./Colour");
+var FloodFill = require("./FloodFill");
 
 
 class Map {
@@ -17,6 +18,7 @@ class Map {
         this.windContinentNoiseSize = options.windContinentNoiseSize || 8;
         this.windBandWeight = options.windBandWeight || 0.8;
         this.windContinentWeight = options.windContinentWeight || 0.3;
+        this.minContinentSize = 6;
 
         this.initMapData();
 
@@ -64,8 +66,126 @@ class Map {
     }
 
     generateContinentMap() {
-        // TODO: Generate continents with flood fill
+        let mapLength = this.width * this.height;
+
+        this.continentLandMassMap = [];
+
+        // Get sea elevation value
+        let seaIndex = this.elevations.findIndex((ele) => ele.value > this.seaLevel);
+        let landElevation = this.elevations[seaIndex + 1];
+
+        for (let i = 0; i < mapLength; i++) {
+            this.continentLandMassMap[i] = this.heightMap[i] >= landElevation.value ? 1 : 0;
+        }
+
+        // Edge detection
+        this.continentLandEdgeMap = this.getEdges(this.continentLandMassMap, this.width, this.height);
+
+        // Generate continents with flood fill
+        this.continentMap = this.continentLandMassMap.slice(0);
+
         this.continents = [];
+
+        let initialContinentIndex = 2;  // Start at 2, 0 is taken for sea - 1 is taken for generic land
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                let i = this.width * y + x;
+
+                let oldColor = this.continentMap[i];
+
+                if (oldColor === 1) {
+                    let filledPixels = FloodFill.fill(this.continentMap, this.width, this.height, x, y, initialContinentIndex, oldColor);
+                    if (filledPixels.length) {
+                        let continent = {
+                            index: initialContinentIndex,
+                            pixels: filledPixels,
+                            size: filledPixels.length,
+                            top: this.height,
+                            bottom: 0,
+                            left: this.width,
+                            right: 0
+                        };
+
+                        // Find the box edges of the continent
+                        for (let j = 0; j < continent.pixels.length; j++) {
+                            if (continent.pixels[j][0] > continent.right) { continent.right = continent.pixels[j][0]; }
+                            if (continent.pixels[j][0] < continent.left) { continent.left = continent.pixels[j][0]; }
+                            if (continent.pixels[j][1] > continent.bottom) { continent.bottom = continent.pixels[j][1]; }
+                            if (continent.pixels[j][1] < continent.top) { continent.top = continent.pixels[j][1]; }
+                        }
+
+                        // Find the center of the continent
+                        continent.center = [
+                            Math.floor((continent.right - continent.left) / 2) + continent.left,
+                            Math.floor((continent.bottom - continent.top) / 2) + continent.top
+                        ];
+
+                        this.continents.push(continent);
+                        initialContinentIndex += 1;
+                    }
+                }
+            }
+        }
+
+
+        // Limit the size of a continent? If too small find closest continent and make part of that
+        for (let i = 0, a = 0, m = this.continents.length; i < m; i++) {
+            let continent = this.continents[a];
+
+            if (continent.size < this.minContinentSize) {
+                // Find closest continent
+                let closest = this.continents.reduce((obj, checkContinent, index) => {
+                    if (checkContinent.size < this.minContinentSize) { return obj; }
+
+                    // TODO: Use edges also!?
+                    // Get distance to this one
+                    let dist = Math.abs(continent.center[0] - checkContinent.center[0]) * Math.abs(continent.center[1] - checkContinent.center[1]);
+                    if (dist < obj.dist) {
+                        obj.dist = dist;
+                        obj.index = index;
+                    }
+
+                    return obj;
+                }, { dist: mapLength, index: -1 });
+
+                // Combine with closest continent
+                if (closest.index !== -1) {
+                    let newContinent = this.continents[closest.index];
+                    newContinent.pixels = newContinent.pixels.concat(continent.pixels);
+                    newContinent.size += continent.pixels.length;
+
+                    // TODO: Re-calculate dimensions & center?
+                    // for (let j = 0; j < newContinent.pixels.length; j++) {
+                    //     if (newContinent.pixels[j][0] > newContinent.right) { newContinent.right = newContinent.pixels[j][0]; }
+                    //     if (newContinent.pixels[j][0] < newContinent.left) { newContinent.left = newContinent.pixels[j][0]; }
+                    //     if (newContinent.pixels[j][1] > newContinent.bottom) { newContinent.bottom = newContinent.pixels[j][1]; }
+                    //     if (newContinent.pixels[j][1] < newContinent.top) { newContinent.top = newContinent.pixels[j][1]; }
+                    // }
+                    //
+                    // // Find the center of the continent
+                    // newContinent.center = [
+                    //     Math.floor((newContinent.right - newContinent.left) / 2) + newContinent.left,
+                    //     Math.floor((newContinent.bottom - newContinent.top) / 2) + newContinent.top
+                    // ];
+                }
+
+                // Remove the old continent
+                this.continents.splice(a, 1);
+            } else {
+                a++;
+            }
+        }
+
+        this.continentMap.fill({ color: [0, 0, 0] });
+        let colours = Colour.getNColours(this.continents.length);
+
+        for (let n = 0, m = this.continents.length; n < m; n++) {
+            let continent = this.continents[n];
+            continent.index = n;
+            let color = colours[n];
+
+            FloodFill.fillRegion(this.continentMap, this.width, this.height, continent.pixels, { color });
+        }
 
         // TODO: Update the main map data
     }
@@ -118,19 +238,16 @@ class Map {
 
         this.percentLand = 0.2;
 
-        let seaLevel = heightMap[Math.floor(this.percentLand * heightMap.length)];
-        let skyLevel = heightMap[heightMap.length - 1];
-
-        console.info("Sea Level:", seaLevel);
-
+        this.seaLevel = heightMap[Math.floor(this.percentLand * heightMap.length)];
+        this.skyLevel = heightMap[heightMap.length - 1];
 
         for (let elevation of elevations) {
             let value;
 
             if (elevation.hasOwnProperty("seaLevel")) {
-                value = seaLevel + (seaLevel * (elevation.seaLevel / 255));
+                value = this.seaLevel + (this.seaLevel * (elevation.seaLevel / 255));
             } else if (elevation.hasOwnProperty("skyLevel")) {
-                value = skyLevel + (skyLevel + (elevation.skyLevel / 255));
+                value = this.skyLevel + (this.skyLevel + (elevation.skyLevel / 255));
             } else {
                 value = elevation.level / 255;
             }
@@ -152,24 +269,22 @@ class Map {
     }
 
     getElevationFromHeight(height) {
+        // for (let i = 0, j = this.elevations.length - 1; i < j; i++) {
+        //     let nextElevation = this.elevations[i + 1];
+        //     if (height < nextElevation.value) {
+        //         return i;
+        //     }
+        // }
+        //
+        // return this.elevations.length - 2;
 
-        for (let i = 0, j = this.elevations.length - 1; i < j; i++) {
-            let nextElevation = this.elevations[i + 1];
-            if (height < nextElevation.value) {
+        for (let i = this.elevations.length - 1; i >= 0; --i) {
+            if (height >= this.elevations[i].value) {
                 return i;
             }
         }
 
-        return this.elevations.length - 2;
-
-
-        // for (let i = this.elevations.length - 1; i >= 0; --i) {
-        //     let elevation = this.elevations[i];
-        //
-        //     if (height >= elevation.value) {
-        //         return i;
-        //     }
-        // }
+        return 0;
     }
 
     createBandMap(numBands) {
@@ -198,6 +313,35 @@ class Map {
         for (let i = 0; i < arr.length; i++) {
             arr[i] = arr[i] / largestVal;
         }
+    }
+
+    getEdges(map, width, height) {
+        let edgeMap = [];
+        let mapLength = width * height;
+        let eh = new Array(mapLength).fill(0);
+        let ev = new Array(mapLength).fill(0);
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let i = width * y + x;
+                let ix = (width * y) + x + 1;
+                let iy = (width * (y + 1)) + x;
+
+                let e1 = map[i] ^ map[ix];
+                let e2 = map[i] ^ map[iy];
+
+                if (e1) {
+                    eh[(map[i] ? i : ix)] = 1;
+                }
+                if (e2) {
+                    ev[(map[i] ? i : iy)] = 1;
+                }
+
+                edgeMap[i] = eh[i] | ev[i];
+            }
+        }
+
+        return edgeMap;
     }
 }
 

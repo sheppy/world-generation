@@ -24,6 +24,18 @@ class Graphics {
         ctx.putImageData(imgData, 0, 0);
     }
 
+    static renderColourMap(ctx, colourMap, width, height) {
+        let mapLength = width * height;
+        let imgData = ctx.createImageData(width, height);
+        let data = imgData.data;
+
+        for (let i = 0; i < mapLength; i++) {
+            Graphics.renderPixel(data, i * 4, colourMap[i].color);
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+    }
+
     static renderHeightMapData(ctx, map, isFlat) {
         let imgData = ctx.createImageData(map.width, map.height);
         let data = imgData.data;

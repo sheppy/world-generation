@@ -66,7 +66,7 @@ let settings = {
     windContinentWeight: 0.3,
 
     // Rendering debugging
-    renderMode: "data"
+    renderMode: "continentMap"
     // renderMode: "data"
 };
 
@@ -78,7 +78,10 @@ let renderModes = [
     "heightNoiseMap",
     "windNoiseMap",
     "windMap",
-    "continentNoiseMap"
+    "continentNoiseMap",
+    "continentLandMassMap",
+    "continentLandEdgeMap",
+    "continentMap"
 ];
 
 let m = new Map();
@@ -91,14 +94,18 @@ function update() {
 
 function render() {
     switch (settings.renderMode) {
-        case "heightNoiseMap":      Graphics.renderAlphaMap(ctx, m.heightNoiseMap, WIDTH, HEIGHT); break;
-        case "heightRollingMask":   Graphics.renderAlphaMap(ctx, m.heightRollingMask, WIDTH, HEIGHT); break;
-        case "heightMap":           Graphics.renderAlphaMap(ctx, m.heightMap, WIDTH, HEIGHT); break;
-        case "windNoiseMap":        Graphics.renderAlphaMap(ctx, m.windNoiseMap, WIDTH, HEIGHT); break;
-        case "continentNoiseMap":   Graphics.renderAlphaMap(ctx, m.continentNoiseMap, WIDTH, HEIGHT); break;
-        case "windMap":             Graphics.renderAlphaMap(ctx, m.windMap, WIDTH, HEIGHT); break;
+        case "heightNoiseMap":          Graphics.renderAlphaMap(ctx, m.heightNoiseMap, WIDTH, HEIGHT); break;
+        case "heightRollingMask":       Graphics.renderAlphaMap(ctx, m.heightRollingMask, WIDTH, HEIGHT); break;
+        case "heightMap":               Graphics.renderAlphaMap(ctx, m.heightMap, WIDTH, HEIGHT); break;
+        case "windNoiseMap":            Graphics.renderAlphaMap(ctx, m.windNoiseMap, WIDTH, HEIGHT); break;
+        case "continentNoiseMap":       Graphics.renderAlphaMap(ctx, m.continentNoiseMap, WIDTH, HEIGHT); break;
+        case "windMap":                 Graphics.renderAlphaMap(ctx, m.windMap, WIDTH, HEIGHT); break;
+        case "continentLandMassMap":    Graphics.renderAlphaMap(ctx, m.continentLandMassMap, WIDTH, HEIGHT); break;
+        case "continentLandEdgeMap":    Graphics.renderAlphaMap(ctx, m.continentLandEdgeMap, WIDTH, HEIGHT); break;
+        case "continentMap":            Graphics.renderColourMap(ctx, m.continentMap, WIDTH, HEIGHT); break;
+        // case "continentMap":            Graphics.renderAlphaMap(ctx, m.continentMap, WIDTH, HEIGHT); break;
 
-        case "dataFlat":            Graphics.renderHeightMapData(ctx, m, true); break;
+        case "dataFlat":                Graphics.renderHeightMapData(ctx, m, true); break;
 
         case "data":
         default:
