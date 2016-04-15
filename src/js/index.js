@@ -5,6 +5,8 @@ import Graphics from "./Graphics"
 
 const WIDTH = 145;
 const HEIGHT = 79;
+// const WIDTH = 640;
+// const HEIGHT = 480;
 
 var ctx = Graphics.createCanvas(WIDTH, HEIGHT);
 

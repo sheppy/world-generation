@@ -1,4 +1,5 @@
 var SimplexNoise = require("simplex-noise");
+var Util = require("./Util");
 
 
 class Noise {
@@ -8,7 +9,7 @@ class Noise {
     }
 
     static rollParticle(random, width, height, map, x, y) {
-        let iCurrent = width * y + x;
+        let iCurrent = Util.xYToIndex(x, y, width);
         let iUp = width * (y - 1) + x;
         let iDown = width * (y + 1) + x;
         let iLeft = width * y + (x - 1);
@@ -103,7 +104,7 @@ class Noise {
 
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                let i = width * y + x;
+                let i = Util.xYToIndex(x, y, width);
                 let n = simplex.noise2D(x / frequency * 2, y / frequency * 2);
                 // let n = simplex.noise2D(x * frequency, y * frequency) * amplitude;
 
@@ -154,7 +155,7 @@ class Noise {
 
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                let i = width * y + x;
+                let i = Util.xYToIndex(x, y, width);
                 let i1 = (width * y) + x + 1;
                 let i2 = (width * (y + 1)) + x;
                 let i3 = (width * y) + x - 1;

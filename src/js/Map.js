@@ -1,6 +1,7 @@
 "use strict";
 
 var Alea = require("alea");
+var Util = require("./Util");
 var Noise = require("./Noise");
 var Colour = require("./Colour");
 var FloodFill = require("./FloodFill");
@@ -18,7 +19,7 @@ class Map {
         this.windContinentNoiseSize = options.windContinentNoiseSize || 8;
         this.windBandWeight = options.windBandWeight || 0.8;
         this.windContinentWeight = options.windContinentWeight || 0.3;
-        this.minContinentSize = 6;
+        this.minContinentSize = Math.round(Math.sqrt(this.width * this.height) * 0.25);
 
         this.initMapData();
 
@@ -32,7 +33,7 @@ class Map {
 
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
-                let i = this.width * y + x;
+                let i = Util.xYToIndex(x, y, this.width);
                 this.data[i] = {};
                 this.data[i].x = x;
                 this.data[i].y = y;
@@ -86,39 +87,27 @@ class Map {
 
         this.continents = [];
 
-        let initialContinentIndex = 2;  // Start at 2, 0 is taken for sea - 1 is taken for generic land
+        let initialContinentIndex = 2;  // Start at 2, 0 is taken for sea, 1 is taken for generic land
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
-                let i = this.width * y + x;
+                let i = Util.xYToIndex(x, y, this.width);
 
                 let oldColor = this.continentMap[i];
 
                 if (oldColor === 1) {
-                    let filledPixels = FloodFill.fill(this.continentMap, this.width, this.height, x, y, initialContinentIndex, oldColor);
-                    if (filledPixels.length) {
+                    let filledPoints = FloodFill.fill(this.continentMap, this.width, this.height, x, y, initialContinentIndex, oldColor);
+                    if (filledPoints.length) {
                         let continent = {
                             index: initialContinentIndex,
-                            pixels: filledPixels,
-                            size: filledPixels.length,
-                            top: this.height,
-                            bottom: 0,
-                            left: this.width,
-                            right: 0
+                            points: filledPoints,
+                            size: filledPoints.length
                         };
 
                         // Find the box edges of the continent
-                        for (let j = 0; j < continent.pixels.length; j++) {
-                            if (continent.pixels[j][0] > continent.right) { continent.right = continent.pixels[j][0]; }
-                            if (continent.pixels[j][0] < continent.left) { continent.left = continent.pixels[j][0]; }
-                            if (continent.pixels[j][1] > continent.bottom) { continent.bottom = continent.pixels[j][1]; }
-                            if (continent.pixels[j][1] < continent.top) { continent.top = continent.pixels[j][1]; }
-                        }
+                        continent.rect = Util.pointsToRect(continent.points, this.width, this.height);
 
                         // Find the center of the continent
-                        continent.center = [
-                            Math.floor((continent.right - continent.left) / 2) + continent.left,
-                            Math.floor((continent.bottom - continent.top) / 2) + continent.top
-                        ];
+                        continent.center = Util.getCenterOfRect(continent.rect);
 
                         this.continents.push(continent);
                         initialContinentIndex += 1;
@@ -151,22 +140,14 @@ class Map {
                 // Combine with closest continent
                 if (closest.index !== -1) {
                     let newContinent = this.continents[closest.index];
-                    newContinent.pixels = newContinent.pixels.concat(continent.pixels);
-                    newContinent.size += continent.pixels.length;
+                    newContinent.points = newContinent.points.concat(continent.points);
+                    newContinent.size += continent.points.length;
 
                     // TODO: Re-calculate dimensions & center?
-                    // for (let j = 0; j < newContinent.pixels.length; j++) {
-                    //     if (newContinent.pixels[j][0] > newContinent.right) { newContinent.right = newContinent.pixels[j][0]; }
-                    //     if (newContinent.pixels[j][0] < newContinent.left) { newContinent.left = newContinent.pixels[j][0]; }
-                    //     if (newContinent.pixels[j][1] > newContinent.bottom) { newContinent.bottom = newContinent.pixels[j][1]; }
-                    //     if (newContinent.pixels[j][1] < newContinent.top) { newContinent.top = newContinent.pixels[j][1]; }
-                    // }
+                    // newContinent.rect = Util.pointsToRect(newContinent.points, this.width, this.height);
                     //
                     // // Find the center of the continent
-                    // newContinent.center = [
-                    //     Math.floor((newContinent.right - newContinent.left) / 2) + newContinent.left,
-                    //     Math.floor((newContinent.bottom - newContinent.top) / 2) + newContinent.top
-                    // ];
+                    // newContinent.center = Util.getCenterOfRect(newContinent.rect);
                 }
 
                 // Remove the old continent
@@ -180,11 +161,11 @@ class Map {
         let colours = Colour.getNColours(this.continents.length);
 
         for (let n = 0, m = this.continents.length; n < m; n++) {
+            let color = colours[n];
             let continent = this.continents[n];
             continent.index = n;
-            let color = colours[n];
 
-            FloodFill.fillRegion(this.continentMap, this.width, this.height, continent.pixels, { color });
+            FloodFill.fillRegion(this.continentMap, this.width, this.height, continent.points, { color });
         }
 
         // TODO: Update the main map data
@@ -300,7 +281,7 @@ class Map {
             }
 
             for (let x = 0; x < this.width; x++) {
-                let i = this.width * y + x;
+                let i = Util.xYToIndex(x, y, this.width);
                 bands[i] = val;
             }
         }
@@ -323,7 +304,7 @@ class Map {
 
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
-                let i = width * y + x;
+                let i = Util.xYToIndex(x, y, width);
                 let ix = (width * y) + x + 1;
                 let iy = (width * (y + 1)) + x;
 

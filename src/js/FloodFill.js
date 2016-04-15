@@ -1,3 +1,5 @@
+var Util = require("./Util");
+
 class FloodFill {
     static fill(map, width, height, x, y, newColor, oldColor) {
         let filledPixels = [];
@@ -24,7 +26,7 @@ class FloodFill {
     }
 
     static fillPixel(map, width, mapLength, stack, x, y, newColor, oldColor) {
-        let i = width * y + x;
+        let i = Util.xYToIndex(x, y, width);
         let i1 = (width * y) + x + 1;
         let i2 = (width * (y + 1)) + x;
         let i3 = (width * y) + x - 1;
@@ -48,7 +50,7 @@ class FloodFill {
         for (let r = 0; r < region.length; r++) {
             let x = region[r][0];
             let y = region[r][1];
-            let i = width * y + x;
+            let i = Util.xYToIndex(x, y, width);
 
             map[i] = newColor;
         }
