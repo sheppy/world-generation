@@ -19,7 +19,7 @@ let settings = {
     elevations: [
         {
             name: "deepSea",
-            seaLevel: -255,
+            level: -41,
             color: [48, 96, 130]
         },
         {
@@ -68,7 +68,8 @@ let settings = {
     windContinentWeight: 0.3,
 
     // Rendering debugging
-    renderMode: "continentMap"
+    // renderMode: "continentMap"
+    renderMode: "heightMap"
     // renderMode: "data"
 };
 
@@ -83,7 +84,8 @@ let renderModes = [
     "continentNoiseMap",
     "continentLandMassMap",
     "continentLandEdgeMap",
-    "continentMap"
+    "continentMap",
+    "waterLevel"
 ];
 
 let m = new Map();
@@ -107,6 +109,7 @@ function render() {
         case "continentMap":            Graphics.renderColourMap(ctx, m.continentMap, WIDTH, HEIGHT); break;
         // case "continentMap":            Graphics.renderAlphaMap(ctx, m.continentMap, WIDTH, HEIGHT); break;
 
+        case "waterLevel":                Graphics.renderWaterLevel(ctx, m, WIDTH, HEIGHT); break;
         case "dataFlat":                Graphics.renderHeightMapData(ctx, m, true); break;
 
         case "data":

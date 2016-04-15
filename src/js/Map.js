@@ -13,13 +13,14 @@ class Map {
         this.random = new Alea(this.seed);
         this.width = options.width;
         this.height = options.height;
+        this.size = this.width * this.height;
 
         this.percentLand = options.percentLand || 0.6;
         this.windNoiseSize = options.windNoiseSize || 3;
         this.windContinentNoiseSize = options.windContinentNoiseSize || 8;
         this.windBandWeight = options.windBandWeight || 0.8;
         this.windContinentWeight = options.windContinentWeight || 0.3;
-        this.minContinentSize = Math.round(Math.sqrt(this.width * this.height) * 0.25);
+        this.minContinentSize = Math.round(Math.sqrt(this.size) * 0.25);
 
         this.initMapData();
 
@@ -42,40 +43,63 @@ class Map {
     }
 
     generateRollingMask() {
-        let iterations = (Math.ceil(this.width * this.height) / 1000) * 2000;
-        let life = (Math.floor(this.width * this.height) / 500) * 2;
+        let iterations = Math.ceil(this.size / 1000) * 2000;
+        let life = Math.floor(this.size / 500) * 2;
+        console.info(`Generating rolling mask with ${iterations} iterations and ${life} life`);
         return Noise.generateRollingMap(this.random, this.width, this.height, iterations, life);
     }
 
     generateHeightMap(noiseMapCount, elevations) {
-        // Generate rolling particle mask
-        this.heightRollingMask = this.generateRollingMask();
         this.heightNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
         this.heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.heightNoiseMaps, 2);
 
-        // Depends if you need a centered map island
-        this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
-        // this.heightMap = this.heightNoiseMap;
+        // Re-normalize so that 0 and 1 are lowest and highest
+        let smallestVal = this.heightNoiseMap.reduce((smallest, val) => val < smallest ? val : smallest, this.size);
+        let largestVal = this.heightNoiseMap.reduce((largest, val) => val > largest ? val : largest, 0);
 
-        this.elevations = this.parseElevations(elevations, this.heightNoiseMap);
+        // TODO: Idea: Apply sea level to the noise map! And re-normalize?
+        // let sortedHeightNoiseMap = this.heightNoiseMap.slice(0).sort();
+        // let seaLevel = sortedHeightNoiseMap[sortedHeightNoiseMap.length - Math.floor(this.percentLand * sortedHeightNoiseMap.length)];
+        // smallestVal = seaLevel// + 0.1;
+
+        console.info(`Normalising heightNoiseMap between ${smallestVal} and ${largestVal}`);
+        for (let i = 0; i < this.size; i++) {
+            this.heightNoiseMap[i] = (this.heightNoiseMap[i] - smallestVal) / (largestVal - smallestVal);
+        }
+
+        // Depends if you need a centered map island
+        this.heightRollingMask = this.generateRollingMask();
+        this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
+
+        // Re-normalize so that 0 and 1 are lowest and highest
+        smallestVal = this.heightMap.reduce((smallest, val) => val < smallest ? val : smallest, this.size);
+        largestVal = this.heightMap.reduce((largest, val) => val > largest ? val : largest, 0);
+
+        console.info(`Normalising heightMap between ${smallestVal} and ${largestVal}`);
+        for (let i = 0; i < this.size; i++) {
+            this.heightMap[i] = (this.heightMap[i] - smallestVal) / (largestVal - smallestVal);
+        }
+
+
+        this.elevations = this.parseElevations(elevations, this.heightMap);
 
         // Update the main map data
-        for (let i = 0, j = this.width * this.height; i < j; i++) {
+        for (let i = 0; i < this.size; i++) {
             this.data[i].height = this.heightMap[i];
             this.data[i].elevation = this.getElevationFromHeight(this.data[i].height);
         }
     }
 
     generateContinentMap() {
-        let mapLength = this.width * this.height;
-
         this.continentLandMassMap = [];
 
-        // Get sea elevation value
+        // TODO: Get sea elevation value
         let seaIndex = this.elevations.findIndex((ele) => ele.value > this.seaLevel);
+        console.log("seaIndex", seaIndex);
+        seaIndex = 1;
         let landElevation = this.elevations[seaIndex + 1];
 
-        for (let i = 0; i < mapLength; i++) {
+        for (let i = 0; i < this.size; i++) {
             this.continentLandMassMap[i] = this.heightMap[i] >= landElevation.value ? 1 : 0;
         }
 
@@ -135,7 +159,7 @@ class Map {
                     }
 
                     return obj;
-                }, { dist: mapLength, index: -1 });
+                }, { dist: this.size, index: -1 });
 
                 // Combine with closest continent
                 if (closest.index !== -1) {
@@ -180,9 +204,7 @@ class Map {
         let bands = this.createBandMap(2);
 
         // 3. For each cell the value from the band is added to the noise map multiplied by the base noise weight
-        let mapLength = this.width * this.height;
-
-        for (let i = 0; i < mapLength; i++) {
+        for (let i = 0; i < this.size; i++) {
             this.windNoiseMap[i] += bands[i] * this.windBandWeight;
         }
 
@@ -199,7 +221,7 @@ class Map {
 
         // 8. This weight is combined with the continent weight and then multiplied by the continent noise and added to the base map.
         this.windMap = [];
-        for (let i = 0; i < mapLength; i++) {
+        for (let i = 0; i < this.size; i++) {
             this.windMap[i] = this.windNoiseMap[i] + (this.continentNoiseMap[i] * this.windContinentWeight);
         }
 
@@ -217,10 +239,14 @@ class Map {
         elevations = JSON.parse(JSON.stringify(elevations));
         heightMap = heightMap.slice(0).sort();
 
-        this.percentLand = 0.2;
-
-        this.seaLevel = heightMap[Math.floor(this.percentLand * heightMap.length)];
+        this.floorLevel = heightMap[0];
         this.skyLevel = heightMap[heightMap.length - 1];
+        this.seaLevel = heightMap[heightMap.length - Math.floor(this.percentLand * heightMap.length)];
+
+        console.info(`Setting sky level to ${this.skyLevel}`);
+        console.info(`Setting sea level to ${this.seaLevel} for ${this.percentLand * 100}% landmass`);
+        console.info(`Setting floor level to ${this.floorLevel}`);
+
 
         for (let elevation of elevations) {
             let value;
@@ -228,7 +254,7 @@ class Map {
             if (elevation.hasOwnProperty("seaLevel")) {
                 value = this.seaLevel + (this.seaLevel * (elevation.seaLevel / 255));
             } else if (elevation.hasOwnProperty("skyLevel")) {
-                value = this.skyLevel + (this.skyLevel + (elevation.skyLevel / 255));
+                value = this.skyLevel + (this.skyLevel * (elevation.skyLevel / 255));
             } else {
                 value = elevation.level / 255;
             }
@@ -244,6 +270,8 @@ class Map {
             } else {
                 elevation.value = value;
             }
+
+            console.info(`Setting elevation ${elevation.name} level to ${elevation.value}`);
         }
 
         return elevations;
