@@ -5,6 +5,8 @@ import Graphics from "./Graphics"
 
 const WIDTH = 145;
 const HEIGHT = 79;
+// const WIDTH = 290;
+// const HEIGHT = 158;
 // const WIDTH = 640;
 // const HEIGHT = 480;
 
@@ -13,7 +15,7 @@ var ctx = Graphics.createCanvas(WIDTH, HEIGHT);
 
 let settings = {
     seed: 123546,
-    noiseMapCount: 7,       // Zoom?
+    smoothness: 7,
     width: WIDTH,
     height: HEIGHT,
     elevations: [
@@ -60,16 +62,12 @@ let settings = {
     ],
 
     percentLand: 0.6,
-
-    // Wind
-    windNoiseSize: 3,
-    windContinentNoiseSize: 8,
-    windBandWeight: 0.8,
-    windContinentWeight: 0.3,
+    seaLevel: 0.35,
+    terrainType: 1,
 
     // Rendering debugging
     // renderMode: "continentMap"
-    renderMode: "heightMap"
+    renderMode: "heightRollingMask"
     // renderMode: "data"
 };
 
@@ -118,36 +116,34 @@ function render() {
     }
 }
 
-window.map = m;
 
+let smoothness = {"Very Smooth": 9, "Smooth": 8, "Medium": 7, "Rough": 5, "Very Rough": 3};
+let seaLevel = {"Very Low": 0.1, "Low": 0.2, "Medium": 0.35, "High": 0.55, "Very High": 0.8};
+let terrainType = {"Flat": 0, "Hilly": 1, "Mountainous": 2};
+/*
 
+Map Size:
+    WxH
+Climate: ???
+Terrain Type:
+    Flat
+    Hilly
+    Mountainous
+Map Edges: Manual / Random ?
+    North
+    South
+    East
+    West
+*/
 
 
 // var obj = { x: 5 };
 var gui = new dat.GUI();
 
 gui.add(settings, "seed").onFinishChange(update);
-gui.add(settings, "noiseMapCount").onFinishChange(update);
+gui.add(settings, "smoothness", smoothness).onFinishChange(update);
+gui.add(settings, "seaLevel", seaLevel).onFinishChange(update);
+gui.add(settings, "terrainType", terrainType).onFinishChange(update);
 gui.add(settings, "renderMode", renderModes).onFinishChange(render);
-gui.add(settings, "percentLand").onFinishChange(update);
-gui.add(settings, "windNoiseSize").onFinishChange(update);
-gui.add(settings, "windContinentNoiseSize").onFinishChange(update);
-gui.add(settings, "windBandWeight").onFinishChange(update);
-gui.add(settings, "windContinentWeight").onFinishChange(update);
 
-
-// var seaFolder = gui.addFolder("Sea");
-// seaFolder.add(settings.elevations.find(ele => ele.name === "sea"), "seaLevel", -255, 255).onFinishChange(update);
-// seaFolder.open();
-//
-// var landFolder = gui.addFolder("Land");
-// landFolder.add(settings.elevations.find(ele => ele.name === "plain"), "seaLevel", -255, 255).onFinishChange(update);
-// landFolder.open();
-//
-// var hillsFolder = gui.addFolder("Hills");
-// hillsFolder.add(settings.elevations.find(ele => ele.name === "hill"), "level", -255, 255).onFinishChange(update);
-// hillsFolder.open();
-//
-// var mountainsFolder = gui.addFolder("Mountains");
-// mountainsFolder.add(settings.elevations.find(ele => ele.name === "mountain"), "level", -255, 255).onFinishChange(update);
-// mountainsFolder.open();
+// gui.add(settings, "percentLand").onFinishChange(update);

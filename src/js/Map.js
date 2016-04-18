@@ -15,17 +15,20 @@ class Map {
         this.height = options.height;
         this.size = this.width * this.height;
 
+        this.smoothness = options.smoothness || 7;
         this.percentLand = options.percentLand || 0.6;
+        this.seaLevel = parseFloat(options.seaLevel) || 0;
+
         this.windNoiseSize = options.windNoiseSize || 3;
         this.windContinentNoiseSize = options.windContinentNoiseSize || 8;
         this.windBandWeight = options.windBandWeight || 0.8;
         this.windContinentWeight = options.windContinentWeight || 0.3;
-        this.minContinentSize = Math.round(Math.sqrt(this.size) * 0.25);
+        this.minContinentSize = options.minContinentSize || Math.round(Math.sqrt(this.size) * 0.25);
 
         console.time("Map.generate()");
         this.initMapData();
 
-        this.generateHeightMap(options.noiseMapCount, options.elevations);
+        this.generateHeightMap(this.smoothness, options.elevations);
         this.generateWindMap();
         this.generateContinentMap();
         console.timeEnd("Map.generate()");
@@ -262,7 +265,7 @@ class Map {
 
         this.floorLevel = heightMap[0];
         this.skyLevel = heightMap[heightMap.length - 1];
-        this.seaLevel = heightMap[heightMap.length - Math.floor(this.percentLand * heightMap.length)];
+        // this.seaLevel = heightMap[heightMap.length - Math.floor(this.percentLand * heightMap.length)];
 
         console.info(`Setting sky level to ${this.skyLevel}`);
         console.info(`Setting sea level to ${this.seaLevel} for ${this.percentLand * 100}% landmass`);
@@ -280,6 +283,7 @@ class Map {
                 value = elevation.level / 255;
             }
 
+            console.info(`elevation ${elevation.name} value ${value}`);
             elevation.index = Math.max(0, Math.ceil(value * heightMap.length));
 
             if (elevation.index >= heightMap.length) {

@@ -77,15 +77,21 @@ class Noise {
         return map.map(val => val / largestVal);
     }
 
-    static generateEdgeGradientMap(width, height) {
+    static generateEdgeGradientMap(width, height, l, r, t, b) {
         let map = [];
 
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
+                let i = Util.xYToIndex(x, y, width);
                 let x1 = x / width;
                 let y1 = y / height;
-                let i = Util.xYToIndex(x, y, width);
-                map[i] = x1 * (1 - x1) * y1 * (1 - y1);
+
+                let left = l ? 0.25 : x1;
+                let right = r ? 0.25 : (1 - x1);
+                let top = t ? 0.25 : y1;
+                let bottom = b ? 0.25 : (1 - y1);
+
+                map[i] = left * right * top * bottom * 10;
             }
         }
 
