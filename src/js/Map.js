@@ -31,6 +31,7 @@ class Map {
         console.timeEnd("Map.generate()");
         // 810-840
         // 596-630
+        // 190-210
     }
 
     initMapData() {
@@ -78,9 +79,11 @@ class Map {
         }
 
         // Depends if you need a centered map island
-        this.heightRollingMask = this.generateRollingMask();
+        // this.heightRollingMask = this.generateRollingMask();
+        // TODO: Possible replacement for the rolling mask
+        this.heightRollingMask = Noise.generateEdgeGradientMap(this.width, this.height);
         this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
-        // this.heightMap = this.heightNoiseMap;
+
 
         // Re-normalize so that 0 and 1 are lowest and highest
         smallestVal = Math.min.apply(Math, this.heightMap);

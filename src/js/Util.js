@@ -1,7 +1,7 @@
 class Util {
     static indexToXY(i, width) {
-        let x = Math.floor(i / width);
-        let y = i % width;
+        let x = i % width;
+        let y = Math.floor(i / width);
         return [x, y];
     }
 
