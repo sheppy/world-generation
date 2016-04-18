@@ -2,16 +2,16 @@
 
 class Colour {
     /**
-     * Mix two colors according to the given proportion
+     * Mix two colors according to the given proportion.
      *
-     * @param {number} value
-     * @param {Object} from
-     * @param {number} from.value
-     * @param {Array} from.color
-     * @param {Object} to
-     * @param {number} to.value
-     * @param {Array} to.color
-     * @returns {Array}
+     * @param {number} value - The current value.
+     * @param {Object} from - The colour to start from.
+     * @param {number} from.value - The starting colour value.
+     * @param {Array} from.color - The starting colour [rgb].
+     * @param {Object} to - The colour to end in.
+     * @param {number} to.value -  The ending colour value.
+     * @param {Array} to.color - The ending colour [rgb].
+     * @returns {Array} - An [rgb] array representing the colour.
      */
     static colorGradient(value, from, to) {
         if (from.value === to.value) {

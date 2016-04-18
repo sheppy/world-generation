@@ -1,6 +1,6 @@
-import dat from "exdat";
-import Map from "./Map"
-import Graphics from "./Graphics"
+var dat = require("exdat");
+var Map = require("./Map");
+var Graphics = require("./Graphics");
 
 
 const WIDTH = 145;

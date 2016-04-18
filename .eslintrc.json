@@ -1,0 +1,40 @@
+{
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "sourceType": "script"
+    },
+    "rules": {
+        "semi": 2,
+
+        "import-order/import-order": 2,
+
+        "smells/no-switch": 1,
+        "smells/no-complex-switch-case": 1,
+        "smells/no-setinterval": 1,
+        "smells/no-this-assign": 1,
+        "smells/no-complex-string-concat": 1,
+        "smells/no-complex-chaining": 1,
+
+        "jsdoc/check-param-names": 1,
+        "jsdoc/check-tag-names": 1,
+        "jsdoc/check-types": 1,
+        "jsdoc/newline-after-description": 1,
+        "jsdoc/require-description-complete-sentence": 1,
+        "jsdoc/require-hyphen-before-param-description": 1,
+        "jsdoc/require-param": 1,
+        "jsdoc/require-param-description": 1,
+        "jsdoc/require-param-type": 1,
+        "jsdoc/require-returns-description": 1,
+        "jsdoc/require-returns-type": 1
+    },
+    "env": {
+        "browser": true,
+        "node": true
+    },
+    "plugins": [
+        "no-inferred-method-name",
+        "import-order",
+        "smells",
+        "jsdoc"
+    ]
+}
