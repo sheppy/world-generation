@@ -8,6 +8,9 @@
  * http://bytten.net/devlog//2013/10/07/overworld-generation-part-2/
  * http://www.dungeonleague.com/2010/03/28/wind-direction/
  * https://cmaher.github.io/posts/working-with-simplex-noise/
+ * http://www.redblobgames.com/maps/terrain-from-noise/
+ * http://www.redblobgames.com/articles/noise/2d/
+ * https://larc.unt.edu/ian/research/tobler/
 
 ## Colours
  * https://kronbits.itch.io/rpg-assets
