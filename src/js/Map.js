@@ -34,6 +34,7 @@ class Map {
     }
 
     initMapData() {
+        console.time("Map.initMapData()");
         this.data = [];
 
         for (let y = 0; y < this.height; y++) {
@@ -44,16 +45,21 @@ class Map {
                 this.data[i].y = y;
             }
         }
+        console.timeEnd("Map.initMapData()");
     }
 
     generateRollingMask() {
+        console.time("\tMap.generateRollingMask()");
         let iterations = Math.ceil(this.size / 1000) * 2000;
         let life = Math.floor(this.size / 500) * 2;
         console.info(`Generating rolling mask with ${iterations} iterations and ${life} life`);
-        return Noise.generateRollingMap(this.random, this.width, this.height, iterations, life);
+        let rollingMask =  Noise.generateRollingMap(this.random, this.width, this.height, iterations, life);
+        console.timeEnd("\tMap.generateRollingMask()");
+        return rollingMask;
     }
 
     generateHeightMap(noiseMapCount, elevations) {
+        console.time("Map.generateHeightMap()");
         this.heightNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, noiseMapCount);
         this.heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.heightNoiseMaps, 2);
 
@@ -74,6 +80,7 @@ class Map {
         // Depends if you need a centered map island
         this.heightRollingMask = this.generateRollingMask();
         this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
+        // this.heightMap = this.heightNoiseMap;
 
         // Re-normalize so that 0 and 1 are lowest and highest
         smallestVal = Math.min.apply(Math, this.heightMap);
@@ -92,9 +99,11 @@ class Map {
             this.data[i].height = this.heightMap[i];
             this.data[i].elevation = this.getElevationFromHeight(this.data[i].height);
         }
+        console.timeEnd("Map.generateHeightMap()");
     }
 
     generateContinentMap() {
+        console.time("Map.generateContinentMap()");
         this.continentLandMassMap = [];
 
         // TODO: Get sea elevation value
@@ -137,7 +146,7 @@ class Map {
                         // Find the center of the continent
                         continent.center = Util.getCenterOfRect(continent.rect);
 
-                        this.continents.push(continent);
+                        this.continents[initialContinentIndex - 2] = continent;
                         initialContinentIndex += 1;
                     }
                 }
@@ -197,9 +206,12 @@ class Map {
         }
 
         // TODO: Update the main map data
+
+        console.timeEnd("Map.generateContinentMap()");
     }
 
     generateWindMap() {
+        console.time("Map.generateWindMap()");
         // 1. Start with a base noise map. (FBM octaves = 5.0 and size = 4.0)
         this.windNoiseMaps = Noise.generateNoiseMaps(this.random, this.width, this.height, this.windNoiseSize);
         this.windNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.windNoiseMaps);
@@ -233,9 +245,11 @@ class Map {
         this.normalize(this.windMap);
 
         // TODO: Update the main map data
+        console.timeEnd("Map.generateWindMap()");
     }
 
     parseElevations(elevations, heightMap) {
+        console.time("\tMap.parseElevations()");
         if (!elevations) {
             return null;
         }
@@ -278,6 +292,7 @@ class Map {
             console.info(`Setting elevation ${elevation.name} level to ${elevation.value}`);
         }
 
+        console.timeEnd("\tMap.parseElevations()");
         return elevations;
     }
 

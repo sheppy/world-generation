@@ -44,6 +44,7 @@ class Noise {
         return adjacents[direction];
     }
 
+    // TODO: Performance, slowest thing
     static generateRollingMap(random, width, height, iterations, startLife) {
         let map = new Array(width * height).fill(0);
 
@@ -77,12 +78,12 @@ class Noise {
     }
 
     static generateNoiseMaps(random, width, height, noiseMapCount, minPow = 2) {
-        let noiseMaps = [];
+        let numNoiseMaps = 0, noiseMaps = [];
 
         for (let n = noiseMapCount; n > 0; --n) {
             let frequency = Math.pow(2, n + minPow);
-            let noise = Noise.generateNoiseMap(random, width, height, frequency);
-            noiseMaps.push(noise);
+            noiseMaps[numNoiseMaps] = Noise.generateNoiseMap(random, width, height, frequency);
+            numNoiseMaps++;
         }
 
         return noiseMaps;
