@@ -17,26 +17,30 @@ class Noise {
 
         map[iCurrent] += 1;
 
-        let adjacents = [];
+        let namAdjacent = 0, adjacents = [];
         if (typeof map[iUp] !== "undefined" && map[iUp] <= map[iCurrent]) {
-            adjacents.push({ x: x, y: y - 1 });
+            adjacents[namAdjacent] = { x: x, y: y - 1 };
+            namAdjacent++;
         }
         if (typeof map[iDown] !== "undefined" && map[iDown] <= map[iCurrent]) {
-            adjacents.push({ x: x, y: y + 1 });
+            adjacents[namAdjacent] = { x: x, y: y + 1 };
+            namAdjacent++;
         }
         if (typeof map[iLeft] !== "undefined" && map[iLeft] <= map[iCurrent]) {
-            adjacents.push({ x: x - 1, y: y });
+            adjacents[namAdjacent] = { x: x - 1, y: y };
+            namAdjacent++;
         }
         if (typeof map[iRight] !== "undefined" && map[iRight] <= map[iCurrent]) {
-            adjacents.push({ x: x + 1, y: y });
+            adjacents[namAdjacent] = { x: x + 1, y: y };
+            namAdjacent++;
         }
 
         // No where to roll
-        if (!adjacents.length) {
+        if (!namAdjacent) {
             return false;
         }
 
-        let direction = Math.floor(random() * adjacents.length);
+        let direction = Math.floor(random() * namAdjacent);
         return adjacents[direction];
     }
 
@@ -56,7 +60,7 @@ class Noise {
             // Pick a random starting point
             let pos = { x: Noise.getRandomInt(random, left, right), y: Noise.getRandomInt(random, top, bottom) };
 
-            for (let life = startLife; life > 0; --life) {
+            for (let i = 0; i < startLife; i++) {
                 pos = Noise.rollParticle(random, width, height, map, pos.x, pos.y);
                 if (!pos) {
                     break;
@@ -64,10 +68,11 @@ class Noise {
             }
         }
 
-        // To absolutely ensure that the islands will not reach the edges, I’ve also multiplied the outermost tiles by 0.75, and the second outermost tiles by 0.88
+        // TODO: Possibly: To absolutely ensure that the islands will not reach the edges,
+        //       multiply the outermost tiles by 0.75, and the second outermost tiles by 0.88
 
         // Normalize the map
-        let largestVal = map.reduce((largest, val) => (val > largest)  ? val : largest, 0);
+        let largestVal = Math.max.apply(Math, map);
         return map.map(val => val / largestVal);
     }
 

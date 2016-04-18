@@ -22,11 +22,15 @@ class Map {
         this.windContinentWeight = options.windContinentWeight || 0.3;
         this.minContinentSize = Math.round(Math.sqrt(this.size) * 0.25);
 
+        console.time("Map.generate()");
         this.initMapData();
 
         this.generateHeightMap(options.noiseMapCount, options.elevations);
         this.generateWindMap();
         this.generateContinentMap();
+        console.timeEnd("Map.generate()");
+        // 810-840
+        // 596-630
     }
 
     initMapData() {
@@ -54,8 +58,8 @@ class Map {
         this.heightNoiseMap = Noise.combineNoiseMapsWeighted(this.width, this.height, this.heightNoiseMaps, 2);
 
         // Re-normalize so that 0 and 1 are lowest and highest
-        let smallestVal = this.heightNoiseMap.reduce((smallest, val) => val < smallest ? val : smallest, this.size);
-        let largestVal = this.heightNoiseMap.reduce((largest, val) => val > largest ? val : largest, 0);
+        let smallestVal = Math.min.apply(Math, this.heightNoiseMap);
+        let largestVal = Math.max.apply(Math, this.heightNoiseMap);
 
         // TODO: Idea: Apply sea level to the noise map! And re-normalize?
         // let sortedHeightNoiseMap = this.heightNoiseMap.slice(0).sort();
@@ -72,8 +76,8 @@ class Map {
         this.heightMap = this.heightNoiseMap.map((val, n) => val * this.heightRollingMask[n]);
 
         // Re-normalize so that 0 and 1 are lowest and highest
-        smallestVal = this.heightMap.reduce((smallest, val) => val < smallest ? val : smallest, this.size);
-        largestVal = this.heightMap.reduce((largest, val) => val > largest ? val : largest, 0);
+        smallestVal = Math.min.apply(Math, this.heightMap);
+        largestVal = Math.max.apply(Math, this.heightMap);
 
         console.info(`Normalising heightMap between ${smallestVal} and ${largestVal}`);
         for (let i = 0; i < this.size; i++) {
@@ -318,8 +322,8 @@ class Map {
     }
 
     normalize(arr) {
-        let largestVal = arr.reduce((largest, val) => val > largest ? val : largest, 0);
-        for (let i = 0; i < arr.length; i++) {
+        let largestVal = Math.max.apply(Math, arr);
+        for (let i = 0, j = arr.length; i < j; i++) {
             arr[i] = arr[i] / largestVal;
         }
     }
