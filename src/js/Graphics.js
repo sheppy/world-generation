@@ -50,12 +50,37 @@ class Graphics {
                 let elevation = map.elevations[map.data[i].elevation];
                 let next = map.elevations[map.data[i].elevation + 1] || elevation;
                 color = Colour.colorGradient(map.data[i].height, elevation, next);
+                // Shadows
+                color = Graphics.shadowColor(map, i, color, 2);
             }
 
             Graphics.renderPixel(data, i * 4, color);
         }
 
         ctx.putImageData(imgData, 0, 0);
+    }
+
+    static shadowColor(map, i, color, SHADOW_DISTANCE) {
+        let pos = Util.indexToXY(i, map.width);
+        let x = pos[0], y = pos[1];
+        let alt = map.data[i].height;
+        let delta = 0, other = 0, diff = 0;
+
+        for (let dist = 0; dist < SHADOW_DISTANCE; dist++) {
+            // To avoid picking unexisting cells
+            if (x > dist && y > dist) {
+                let j = Util.xYToIndex(x - 1 - dist, y - 1 - dist, map.width);
+                other = map.data[j].height;
+            }
+
+            diff = other - alt;
+            if (other > map.seaLevel && other > alt) {
+                delta += diff / (1.0 + dist);
+            }
+            delta = Math.min(0.2, delta);
+        }
+
+        return Colour.colorGradient(delta, { value: 0, color: color }, { value: 0.2, color: [0,0,0]});
     }
 
     static renderPixel(data, d, color, alpha) {
