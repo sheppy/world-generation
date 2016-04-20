@@ -38,7 +38,7 @@ class Graphics {
         ctx.putImageData(imgData, 0, 0);
     }
 
-    static renderHeightMapData(ctx, map, isFlat) {
+    static renderHeightMapData(ctx, map, isFlat, drawShadows, drawRivers) {
         let imgData = ctx.createImageData(map.width, map.height);
         let data = imgData.data;
 
@@ -50,19 +50,32 @@ class Graphics {
                 let elevation = map.elevations[map.data[i].elevation];
                 let next = map.elevations[map.data[i].elevation + 1] || elevation;
                 color = Colour.colorGradient(map.data[i].height, elevation, next);
+
                 // Shadows
-                color = Graphics.shadowColor(map, i, color, 2);
+                if (drawShadows) {
+                    color = Graphics.shadowColor(map, i, color, 2);
+                }
             }
 
             Graphics.renderPixel(data, i * 4, color);
+        }
+
+        // Render rivers
+        if (drawRivers) {
+            for (let n = 0, m = map.riverList.length; n < m; n++) {
+                let river = map.riverList[n];
+                for (let i = 0, j = river.length; i < j; i++) {
+                    let color = map.elevations[1].color;
+                    Graphics.renderPixel(data, river[i] * 4, color);
+                }
+            }
         }
 
         ctx.putImageData(imgData, 0, 0);
     }
 
     static shadowColor(map, i, color, SHADOW_DISTANCE) {
-        let pos = Util.indexToXY(i, map.width);
-        let x = pos[0], y = pos[1];
+        let [x, y] = Util.indexToXY(i, map.width);
         let alt = map.data[i].height;
         let delta = 0, other = 0, diff = 0;
 

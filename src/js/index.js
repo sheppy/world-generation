@@ -7,6 +7,8 @@ const WIDTH = 145;
 const HEIGHT = 79;
 // const WIDTH = 290;
 // const HEIGHT = 158;
+// const WIDTH = 320;
+// const HEIGHT = 240;
 // const WIDTH = 640;
 // const HEIGHT = 480;
 
@@ -26,7 +28,7 @@ let settings = {
         },
         {
             name: "sea",
-            seaLevel: -40,
+            seaLevel: 0,
             color: [99, 155, 255]
         },
         {
@@ -66,9 +68,9 @@ let settings = {
     terrainType: 1,
 
     // Rendering debugging
-    // renderMode: "continentMap"
-    renderMode: "heightRollingMask"
-    // renderMode: "data"
+    renderMode: "riverMap",
+    drawRivers: true,
+    drawShadows: true
 };
 
 let renderModes = [
@@ -83,7 +85,9 @@ let renderModes = [
     "continentLandMassMap",
     "continentLandEdgeMap",
     "continentMap",
-    "waterLevel"
+    "waterLevel",
+    "waterFlow",
+    "riverMap"
 ];
 
 let m = new Map();
@@ -107,12 +111,16 @@ function render() {
         case "continentMap":            Graphics.renderColourMap(ctx, m.continentMap, WIDTH, HEIGHT); break;
         // case "continentMap":            Graphics.renderAlphaMap(ctx, m.continentMap, WIDTH, HEIGHT); break;
 
+        case "waterFlow":               Graphics.renderAlphaMap(ctx, m.waterFlow, WIDTH, HEIGHT); break;
+        case "riverMap":                Graphics.renderAlphaMap(ctx, m.riverMap, WIDTH, HEIGHT); break;
+
+
         case "waterLevel":                Graphics.renderWaterLevel(ctx, m, WIDTH, HEIGHT); break;
-        case "dataFlat":                Graphics.renderHeightMapData(ctx, m, true); break;
+        case "dataFlat":                Graphics.renderHeightMapData(ctx, m, true, settings.drawShadows, settings.drawRivers); break;
 
         case "data":
         default:
-            Graphics.renderHeightMapData(ctx, m);
+            Graphics.renderHeightMapData(ctx, m, false, settings.drawShadows, settings.drawRivers);
     }
 }
 
@@ -144,6 +152,9 @@ gui.add(settings, "seed").onFinishChange(update);
 gui.add(settings, "smoothness", smoothness).onFinishChange(update);
 gui.add(settings, "seaLevel", seaLevel).onFinishChange(update);
 gui.add(settings, "terrainType", terrainType).onFinishChange(update);
+
 gui.add(settings, "renderMode", renderModes).onFinishChange(render);
+gui.add(settings, "drawShadows").onFinishChange(render);
+gui.add(settings, "drawRivers").onFinishChange(render);
 
 // gui.add(settings, "percentLand").onFinishChange(update);

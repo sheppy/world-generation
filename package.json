@@ -12,6 +12,7 @@
   "dependencies": {
     "alea": "0.0.9",
     "exdat": "^0.6.2",
+    "javascript-astar": "^0.4.1",
     "require-dir": "^0.3.0",
     "simplex-noise": "^2.2.0"
   },

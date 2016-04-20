@@ -1,6 +1,7 @@
 "use strict";
 
 var Alea = require("alea");
+var aStar = require("javascript-astar");
 var Util = require("./Util");
 var Noise = require("./Noise");
 var Colour = require("./Colour");
@@ -32,9 +33,6 @@ class Map {
         this.generateWindMap();
         this.generateContinentMap();
         console.timeEnd("Map.generate()");
-        // 810-840
-        // 596-630
-        // 190-210
     }
 
     initMapData() {
@@ -97,8 +95,9 @@ class Map {
             this.heightMap[i] = (this.heightMap[i] - smallestVal) / (largestVal - smallestVal);
         }
 
-
         this.elevations = this.parseElevations(elevations, this.heightMap);
+
+        this.generateErosion();
 
         // Update the main map data
         for (let i = 0; i < this.size; i++) {
@@ -108,18 +107,162 @@ class Map {
         console.timeEnd("Map.generateHeightMap()");
     }
 
+    generateErosion() {
+        console.time("Map.generateErosion()");
+        this.waterFlow = new Array(this.size).fill(0);
+        let riverSources = [];
+        this.riverList = [];
+        this.riverMap = new Array(this.size).fill(1);
+
+        let staticWaterInflow = 10; // TODO: Use moisture map instead of this
+
+        // Step one: water flow per cell based on rainfall
+        // We start by calculating for each cell, which direction the water would flow from there
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                let iCurrent = Util.xYToIndex(x, y, this.width);
+                let iUp = Util.xYToIndex(x, y - 1, this.width);
+                let iDown = Util.xYToIndex(x, y + 1, this.width);
+                let iLeft = Util.xYToIndex(x - 1, y, this.width);
+                let iRight = Util.xYToIndex(x + 1, y, this.width);
+
+                let adjacentCount = 0, adjacents = [];
+                if (typeof this.heightMap[iUp] !== "undefined" && this.heightMap[iUp] < this.heightMap[iCurrent]) {
+                    adjacents[adjacentCount] = iUp;
+                    adjacentCount++;
+                }
+                if (typeof this.heightMap[iDown] !== "undefined" && this.heightMap[iDown] < this.heightMap[iCurrent]) {
+                    adjacents[adjacentCount] = iDown;
+                    adjacentCount++;
+                }
+                if (typeof this.heightMap[iLeft] !== "undefined" && this.heightMap[iLeft] < this.heightMap[iCurrent]) {
+                    adjacents[adjacentCount] = iLeft;
+                    adjacentCount++;
+                }
+                if (typeof this.heightMap[iRight] !== "undefined" && this.heightMap[iRight] < this.heightMap[iCurrent]) {
+                    adjacents[adjacentCount] = iRight;
+                    adjacentCount++;
+                }
+
+                for (let i = 0; i < adjacentCount; i++) {
+                    if (this.heightMap[adjacents[i]] >= this.landLevel) {
+                        this.waterFlow[adjacents[i]] += staticWaterInflow / adjacentCount;
+                    }
+                }
+            }
+        }
+
+        // Step two: find river sources (seeds)
+        // We look for points with high elevation which collect a certain amount of in-flow from other cells
+        // river_sources = self.river_sources(world, water_flow, water_path)
+        let riverSourceHeight = this.sortedHeightMap[Math.floor(this.size * 0.9)];
+        let riverSourceMinSize = 2 * staticWaterInflow;
+        for (let i = 0; i < this.size; i++) {
+            if (this.waterFlow[i] > riverSourceMinSize && this.heightMap[i] > riverSourceHeight) {
+                riverSources.push(i);
+            }
+        }
+
+        // Step three: for each source, find a path to sea
+        // Then we calculate the path between the sources and the sea. Rivers which cannot reach the sea generate lakes
+        let grid2d = [];
+
+        let largestWaterflow = Math.max.apply(Math, this.waterFlow) + 1;
+        for (let y = 0; y < this.height; y++) {
+            grid2d[y] = [];
+            for (let x = 0; x < this.width; x++) {
+                let i = Util.xYToIndex(x, y, this.width);
+                let val = Math.round((this.waterFlow[i] / largestWaterflow) * 100);
+                if (this.heightMap[i] < this.landLevel) {
+                    val = 1;
+                }
+                grid2d[y][x] = val;
+            }
+        }
+
+        // this.normalize(this.waterFlow);
+        for (let r = 0, s = riverSources.length; r < s; r++) {
+            let graph = new aStar.Graph(grid2d);
+            let startPos = Util.indexToXY(riverSources[r], this.width);
+            var start = graph.grid[startPos[1]][startPos[0]];
+
+            // TODO: Find the closest sea to go to [critical]
+            var end = graph.grid[1][2];
+
+            let resultWithWeight = aStar.astar.search(graph, start, end);
+
+            // console.log(resultWithWeight);
+
+            if (resultWithWeight.length) {
+                let river = [];
+
+                for (let n = 0, m = resultWithWeight.length; n < m; n++) {
+                    let i = Util.xYToIndex(resultWithWeight[n].x, resultWithWeight[n].y, this.width);
+                    if (this.heightMap[i] === undefined || this.heightMap[i] < this.landLevel) {
+                        break;
+                    }
+                    river.push(i);
+                }
+
+                if (river.length) {
+                    this.riverList.push(river);
+                }
+            }
+        }
+
+        // Step four: simulate erosion and updating river map
+        // Basically, we remove terrain depending on the amount of water flowing in
+        this.normalize(this.waterFlow);
+        for (let i = 0; i < this.size; i++) {
+            this.heightMap[i] -= this.waterFlow[i] * 0.01;  // Global erosion factor
+        }
+
+
+        // TODO Generate river map!!!!
+
+        for (let n = 0, m = this.riverList.length; n < m; n++) {
+            let river = this.riverList[n];
+            for (let i = 0, j = river.length; i < j; i++) {
+                let iCurrent = river[i];
+                let [x, y] = Util.indexToXY(iCurrent, this.width);
+
+                let iUp = Util.xYToIndex(x, y - 1, this.width);
+                let iDown = Util.xYToIndex(x, y + 1, this.width);
+                let iLeft = Util.xYToIndex(x - 1, y, this.width);
+                let iRight = Util.xYToIndex(x + 1, y, this.width);
+
+                this.riverMap[iCurrent] = this.heightMap[iCurrent];
+
+                // TODO: Where to get this multiplier from, should we ues something about the water flow?
+                let multiplier = 1.2; // this.waterFlow[iCurrent] * 6;//1.2;
+                if (this.riverMap[iUp] === 1) { this.riverMap[iUp] = this.heightMap[iCurrent] * multiplier; }
+                if (this.riverMap[iDown] === 1) { this.riverMap[iDown] = this.heightMap[iCurrent] * multiplier; }
+                if (this.riverMap[iLeft] === 1) { this.riverMap[iLeft] = this.heightMap[iCurrent] * multiplier; }
+                if (this.riverMap[iRight] === 1) { this.riverMap[iRight] = this.heightMap[iCurrent] * multiplier; }
+            }
+        }
+
+        // Apply the river map to the height map
+        this.heightMap = this.heightMap.map((val, n) => val * this.riverMap[n]);
+
+        // TODO: Only needed for rendering?
+        for (let n = 0, m = this.riverList.length; n < m; n++) {
+            let river = this.riverList[n];
+            for (let i = 0, j = river.length; i < j; i++) {
+                this.waterFlow[river[i]] = 1;
+            }
+        }
+
+        console.timeEnd("Map.generateErosion()");
+    }
+
+
     generateContinentMap() {
         console.time("Map.generateContinentMap()");
         this.continentLandMassMap = [];
 
-        // TODO: Get sea elevation value
-        let seaIndex = this.elevations.findIndex((ele) => ele.value > this.seaLevel);
-        console.log("seaIndex", seaIndex);
-        seaIndex = 1;
-        let landElevation = this.elevations[seaIndex + 1];
-
         for (let i = 0; i < this.size; i++) {
-            this.continentLandMassMap[i] = this.heightMap[i] >= landElevation.value ? 1 : 0;
+            this.continentLandMassMap[i] = this.heightMap[i] >= this.landLevel ? 1 : 0;
         }
 
         // Edge detection
@@ -261,10 +404,12 @@ class Map {
         }
 
         elevations = JSON.parse(JSON.stringify(elevations));
-        heightMap = heightMap.slice(0).sort();
+        this.sortedHeightMap = heightMap.slice(0).sort();
 
-        this.floorLevel = heightMap[0];
-        this.skyLevel = heightMap[heightMap.length - 1];
+        this.floorLevel = this.sortedHeightMap[0];
+        this.skyLevel = this.sortedHeightMap[this.sortedHeightMap.length - 1];
+
+
         // this.seaLevel = heightMap[heightMap.length - Math.floor(this.percentLand * heightMap.length)];
 
         console.info(`Setting sky level to ${this.skyLevel}`);
@@ -284,20 +429,28 @@ class Map {
             }
 
             console.info(`elevation ${elevation.name} value ${value}`);
-            elevation.index = Math.max(0, Math.ceil(value * heightMap.length));
+            elevation.index = Math.max(0, Math.ceil(value * this.sortedHeightMap.length));
 
-            if (elevation.index >= heightMap.length) {
-                elevation.index = heightMap.length - 1;
+            if (elevation.index >= this.sortedHeightMap.length) {
+                elevation.index = sortedHeightMap.length - 1;
             }
 
             if (elevation.hasOwnProperty("seaLevel") || elevation.hasOwnProperty("skyLevel")) {
-                elevation.value = heightMap[elevation.index];
+                elevation.value = this.sortedHeightMap[elevation.index];
             } else {
                 elevation.value = value;
             }
 
             console.info(`Setting elevation ${elevation.name} level to ${elevation.value}`);
         }
+
+
+        // TODO: Get sea elevation value
+        let seaIndex = elevations.findIndex((ele) => ele.value > this.seaLevel);
+        console.log("seaIndex", seaIndex);
+        seaIndex = 1;
+        let landElevation = elevations[seaIndex + 1];
+        this.landLevel = landElevation.value;
 
         console.timeEnd("\tMap.parseElevations()");
         return elevations;

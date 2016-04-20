@@ -10,10 +10,10 @@ class Noise {
 
     static rollParticle(random, width, height, map, x, y) {
         let iCurrent = Util.xYToIndex(x, y, width);
-        let iUp = width * (y - 1) + x;
-        let iDown = width * (y + 1) + x;
-        let iLeft = width * y + (x - 1);
-        let iRight = width * y + (x + 1);
+        let iUp = Util.xYToIndex(x, y - 1, width);
+        let iDown = Util.xYToIndex(x, y + 1, width);
+        let iLeft = Util.xYToIndex(x - 1, y, width);
+        let iRight = Util.xYToIndex(x + 1, y, width);
 
         map[iCurrent] += 1;
 
